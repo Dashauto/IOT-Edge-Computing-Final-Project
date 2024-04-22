@@ -1,0 +1,17 @@
+/*
+ * Global.h
+ *
+ * Created: 2024/3/9 19:53:54
+ *  Author: YINING
+ */ 
+
+
+#ifndef GLOBAL_H
+#define GLOBAL_H
+
+#include "FreeRTOS.h"
+#include "queue.h"
+
+extern QueueHandle_t xQueue;
+
+#endif // GLOBAL_H
