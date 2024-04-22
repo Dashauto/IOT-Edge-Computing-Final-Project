@@ -31,6 +31,8 @@ QueueHandle_t xQueueGameBuffer = NULL;      ///< Queue to send the next play to 
 QueueHandle_t xQueueImuBuffer = NULL;       ///< Queue to send IMU data to the cloud
 QueueHandle_t xQueueDistanceBuffer = NULL;  ///< Queue to send the distance to the cloud
 
+QueueHandle_t xQueueTimeInfo = NULL;
+
 /*HTTP DOWNLOAD RELATED DEFINES AND VARIABLES*/
 
 uint8_t do_download_flag = false;  // Flag that when true initializes a download. False to connect to MQTT broker
@@ -1003,6 +1005,8 @@ void vWifiTask(void *pvParameters)
     xQueueGameBuffer = xQueueCreate(2, sizeof(struct GameDataPacket));
     xQueueDistanceBuffer = xQueueCreate(5, sizeof(uint16_t));
 
+    xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeSinceBoot));
+
     if (xQueueWifiState == NULL || xQueueImuBuffer == NULL || xQueueGameBuffer == NULL || xQueueDistanceBuffer == NULL) {
         SerialConsoleWriteString("ERROR Initializing Wifi Data queues!\r\n");
     }
@@ -1160,5 +1164,20 @@ int WifiAddDistanceDataToQueue(uint16_t *distance)
 int WifiAddGameDataToQueue(struct GameDataPacket *game)
 {
     int error = xQueueSend(xQueueGameBuffer, game, (TickType_t)10);
+    return error;
+}
+
+/**
+ void WifiAddTimeToQueue(struct TimeSinceBoot* imuPacket)
+ * @brief	Adds an game to the queue to send via MQTT. Game data must have 0xFF IN BYTES THAT WILL NOT BE SENT!
+ * @param[out]
+
+ * @return		Returns pdTrue if data can be added to queue, pdFalse if queue is full
+ * @note
+
+*/
+int WifiAddTimeToQueue(struct TimeSinceBoot *time)
+{
+    int error = xQueueSend(xQueueTimeInfo, time, (TickType_t)10);
     return error;
 }

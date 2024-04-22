@@ -8,10 +8,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 //#include "queue.h"
-
 //#include "Global.h"
 #include "sensorTask.h"
-#include "voc/sensirion_voc_algorithm.h"
+
 #include "voc/VOCcal.h"
 #include "I2cDriver/I2cDriver.h"
 #include "WifiHandlerThread/WifiHandler.h"
@@ -115,7 +114,6 @@ void sensorTask(void *pvParameters)
 			 */
 			temperature = (((buffer[0] << 8 | buffer[1]) * 175) / 65536 ) - 45;
 			humidity = ((buffer[0] << 8) | buffer[1]) * 100 / 65536;
-
 			snprintf((char *) buffer1, sizeof(buffer1), "Temp : %d Humi: %d\r\n",temperature, humidity);
 			SerialConsoleWriteString(buffer1);
 
@@ -125,11 +123,8 @@ void sensorTask(void *pvParameters)
 			voc_raw = (buffer[0] << 8) | buffer[1];
 			snprintf((char *) buffer1, sizeof(buffer1), "voc_raw : %d\r\n",voc_raw);
 			SerialConsoleWriteString(buffer1);
-			//VocAlgorithm_init(&voc_algorithm_params);
-			//VocAlgorithm_process(&voc_algorithm_params, voc_raw, &voc_index);
+
 			VocAlgorithm_process2(voc_raw, &voc_index);
-
-
 			snprintf((char *) buffer1, sizeof(buffer1), "VOC Index : %d\r\n",voc_index);
 			SerialConsoleWriteString(buffer1);
 

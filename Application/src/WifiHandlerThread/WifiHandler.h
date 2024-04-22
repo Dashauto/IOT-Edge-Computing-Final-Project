@@ -25,6 +25,7 @@ extern "C" {
 #include "secret.h"  // NOTE: You must make this file and include your Wi-Fi settings
 #include "socket/include/socket.h"
 #include "stdio_serial.h"
+#include "Global.h"
 
 /******************************************************************************
  * Defines
@@ -82,6 +83,21 @@ struct RgbColorPacket {
     uint8_t green;
     uint8_t blue;
 };
+
+typedef enum {
+    TIME_INFO_SEND,
+    TIME_INFO_ADJUST,
+    TIME_INFO_SET
+
+} TimeInfoType;
+
+typedef struct {
+    TimeInfoType type;
+    uint32_t hours;
+    uint32_t minutes;
+    uint32_t seconds;
+    uint32_t milliseconds;
+} TimeSinceBoot;
 
 /* Max size of UART buffer. */
 #define MAIN_CHAT_BUFFER_SIZE 64
@@ -153,6 +169,7 @@ void WifiHandlerSetState(uint8_t state);
 int WifiAddDistanceDataToQueue(uint16_t *distance);
 int WifiAddImuDataToQueue(struct ImuDataPacket *imuPacket);
 int WifiAddGameDataToQueue(struct GameDataPacket *game);
+int WifiAddTimeToQueue(struct TimeSinceBoot *time);
 void SubscribeHandlerLedTopic(MessageData *msgData);
 void SubscribeHandlerGameTopic(MessageData *msgData);
 void SubscribeHandlerImuTopic(MessageData *msgData);
