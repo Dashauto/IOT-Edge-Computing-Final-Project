@@ -14,7 +14,7 @@
 
 - priority: cli > clock > sensor = wifi
 
-'''
+```
 
 xQueueWifiState = xQueueCreate(5, sizeof(uint32_t));
 
@@ -24,4 +24,4 @@ xQueueOperateState = xQueueCreate(2, sizeof(uint32_t));  // 2 states
 
 xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeStruct));  // time data
 
-'''
+```
