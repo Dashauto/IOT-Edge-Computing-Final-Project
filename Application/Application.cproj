@@ -1263,7 +1263,6 @@
     <Folder Include="src\CliThread" />
     <Folder Include="src\I2cDriver" />
     <Folder Include="src\PWM\" />
-    <Folder Include="src\sensirion_gas_index_algorithm\" />
     <Folder Include="src\Sensors_Task\" />
     <Folder Include="src\TEMPERATURE\" />
     <Folder Include="src\SerialConsole\" />
@@ -1305,19 +1304,10 @@
     <Compile Include="src\PWM\pwm.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\sensirion_gas_index_algorithm\sensirion_gas_index_algorithm.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\TFTdriver\tft.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\TFTdriver\tft.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\voc\sensirion_voc_algorithm.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\voc\sensirion_voc_algorithm.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\voc\VOCcal.c">

@@ -22,8 +22,6 @@
 
 volatile bool buttonPressed = false;
 
-static VocAlgorithmParams voc_algorithm_params;
-
 // SETUP FOR EXTERNAL BUTTON INTERRUPT -- Used to send an MQTT Message
 
 void configure_button(void)

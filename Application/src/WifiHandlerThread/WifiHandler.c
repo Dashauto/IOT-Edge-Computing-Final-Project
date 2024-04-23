@@ -1005,7 +1005,7 @@ void vWifiTask(void *pvParameters)
     xQueueGameBuffer = xQueueCreate(2, sizeof(struct GameDataPacket));
     xQueueDistanceBuffer = xQueueCreate(5, sizeof(uint16_t));
 
-    xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeSinceBoot));
+    //xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeSinceBoot));
 
     if (xQueueWifiState == NULL || xQueueImuBuffer == NULL || xQueueGameBuffer == NULL || xQueueDistanceBuffer == NULL) {
         SerialConsoleWriteString("ERROR Initializing Wifi Data queues!\r\n");
@@ -1176,8 +1176,8 @@ int WifiAddGameDataToQueue(struct GameDataPacket *game)
  * @note
 
 */
-int WifiAddTimeToQueue(struct TimeSinceBoot *time)
-{
-    int error = xQueueSend(xQueueTimeInfo, time, (TickType_t)10);
-    return error;
-}
+//int WifiAddTimeToQueue(struct TimeSinceBoot *time)
+//{
+    //int error = xQueueSend(xQueueTimeInfo, time, (TickType_t)10);
+    //return error;
+//}
