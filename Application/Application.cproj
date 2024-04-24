@@ -1255,6 +1255,7 @@
     <Folder Include="src\ASF\thirdparty\pahomqtt\MQTTClient\Platforms\" />
     <Folder Include="src\ASF\thirdparty\pahomqtt\MQTTClient\Wrapper\" />
     <Folder Include="src\ASF\thirdparty\pahomqtt\MQTTPacket\" />
+    <Folder Include="src\ClockTask\" />
     <Folder Include="src\config\" />
     <Folder Include="src\IMU\" />
     <Folder Include="src\IMU\" />
@@ -1290,6 +1291,15 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ButtonTask.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ClockTask\clock.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ClockTask\clock.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Global.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\LedTask.c">

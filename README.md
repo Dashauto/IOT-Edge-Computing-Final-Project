@@ -25,3 +25,21 @@ xQueueOperateState = xQueueCreate(2, sizeof(uint32_t));  // 2 states
 xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeStruct));  // time data
 
 ```
+
+Wifi send & receive procedure:
+
+将XXX改为合适的内容：
+
+1. 在头文件中定义要传的struct
+
+2. 声明[QueueHandle_t xQueueXXXInfo = NULL;] 以及 [xQueueXXXInfo = xQueueCreate(5, sizeof(struct TimeXXX));] 跨Task传参handler
+
+3. 添加[int WifiAddXXXToQueue(struct TimeSinceBoot *time)]函数作为跨Task传参函数
+
+4. 在 [static void MQTT_HandleTransactions(void)]函数中添加[MQTT_HandleXXXMessages()]函数
+
+5. 补全[MQTT_HandleXXXMessages()]函数
+
+6. 在头文件中定义 MQTT topic [#define XXX_TOPIC "xxx"]
+
+7. 定义 [void SubscribeHandlerXXXTopic(MessageData *msgData)]函数

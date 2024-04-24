@@ -37,7 +37,7 @@ extern "C" {
 #define WIFI_DOWNLOAD_HANDLE 3  ///< State for Wifi handler to Handle Download Connection
 
 #define WIFI_TASK_SIZE 500
-#define WIFI_PRIORITY (configMAX_PRIORITIES - 2)
+#define WIFI_PRIORITY (configMAX_PRIORITIES - 3)
 
 /** IP address parsing. */
 #define IPV4_BYTE(val, index) ((val >> (index * 8)) & 0xFF)
@@ -84,20 +84,27 @@ struct RgbColorPacket {
     uint8_t blue;
 };
 
+/**
+ * @brief Structure to hold time since boot
+ * TIME_INFO_SEND: send current time to wifihandeler
+ * TIME_INFO_ADJUST: receive adjusted time from web
+ * TIME_INFO_SET_OPEN: receive curtain open time from web
+ * TIME_INFO_SET_CLOSE: receive curtain close time from web
+*/
 typedef enum {
-    TIME_INFO_SEND,
-    TIME_INFO_ADJUST,
-    TIME_INFO_SET
+    TIME_INFO_SEND, // send current time to wifihandeler
+    TIME_INFO_ADJUST, // receive adjusted time from web
+    TIME_INFO_SET_OPEN, // receive curtain open time from web
+    TIME_INFO_SET_CLOSE // receive curtain close time from web
+} TimeType;
 
-} TimeInfoType;
-
-typedef struct {
-    TimeInfoType type;
+struct TimeInfo {
+    TimeType type;
     uint32_t hours;
     uint32_t minutes;
     uint32_t seconds;
     uint32_t milliseconds;
-} TimeSinceBoot;
+};
 
 /* Max size of UART buffer. */
 #define MAIN_CHAT_BUFFER_SIZE 64
@@ -120,6 +127,8 @@ typedef struct {
 #define TEMPERATURE_TOPIC "P1_TEMPERATURE_ESE516_T0"  // Students to change to an unique identifier for each device! Distance Data
 #define SENSOR_TOPIC "sensor"
 #define Button_TOPIC "button"
+#define TIME_TOPIC "Time"
+#define TIME_ADJUST_TOPIC "Adjusted_Time"
 
 #else
 /* Chat MQTT topic. */
@@ -146,8 +155,10 @@ typedef struct {
 /*
  * A MQTT broker server which was connected.
  * m2m.eclipse.org is public MQTT broker.
+ * WZ Azure MQTT Broker: 52.179.188.39
+ * YX Azure MQTT Broker: 74.249.109.202
  */
-static const char main_mqtt_broker[] = "52.179.188.39";
+static const char main_mqtt_broker[] = "74.249.109.202";
 
 #define STRING_EOL "\r\n"
 #define STRING_HEADER                                                                 \
@@ -169,7 +180,7 @@ void WifiHandlerSetState(uint8_t state);
 int WifiAddDistanceDataToQueue(uint16_t *distance);
 int WifiAddImuDataToQueue(struct ImuDataPacket *imuPacket);
 int WifiAddGameDataToQueue(struct GameDataPacket *game);
-int WifiAddTimeToQueue(struct TimeSinceBoot *time);
+int WifiAddTimeToQueue(struct TimeInfo *time);
 void SubscribeHandlerLedTopic(MessageData *msgData);
 void SubscribeHandlerGameTopic(MessageData *msgData);
 void SubscribeHandlerImuTopic(MessageData *msgData);

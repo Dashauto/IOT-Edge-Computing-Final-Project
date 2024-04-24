@@ -142,6 +142,7 @@ void sensorTask(void *pvParameters)
 			// Buzzer PB03
 			//port_pin_set_output_level(PIN_PB03, false);
 		}
+		vTaskDelay(10);
 	}
 }
 

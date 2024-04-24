@@ -7,58 +7,93 @@
 #include "clock.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "Global.h"
+#include "SerialConsole.h"
 
 #include "WifiHandlerThread/WifiHandler.h"
 
-void getTimeSinceBoot(TimeSinceBoot *time, TimeSinceBoot *tick) {
-    TickType_t ticks = xTaskGetTickCount(); // Get the current tick count
-    const TickType_t tickRate = configTICK_RATE_HZ; // Ticks per second, set in FreeRTOSConfig.h
+TickType_t ticknum = 0;
 
-    // Convert ticks to milliseconds
-    uint32_t milliseconds = (ticks * 1000) / tickRate;
+
+/**
+ * @fn		    void getTimeSinceBoot(TimeInfo *time, TimeInfo *tick)
+ * 
+ * @brief       Get the time since the system booted, adjusted by the time the system was set to
+ * @param       time: TimeInfo struct to store the time since boot
+ * @param       tick: TimeInfo struct to store the time the system was set to
+ * 
+*/
+void getTimeSinceBoot(struct TimeInfo *time, struct TimeInfo *tick) {
+    TickType_t ticks = xTaskGetTickCount() - ticknum; // Get the current tick count
 
     // Calculate time components
-    time->milliseconds = milliseconds % 1000;
-    time->seconds = (milliseconds / 1000) % 60;
-    time->minutes = ((milliseconds / (1000 * 60))+ tick->minutes) % 60;
-    time->hours = ((milliseconds / (1000 * 60 * 60)) + tick->hours)% 24;
+    time->milliseconds = ticks % 1000;
+    time->seconds = (ticks / 1000) % 60;
+    time->minutes = ((ticks / (1000 * 60))+ tick->minutes) % 60;
+    time->hours = ((ticks / (1000 * 60 * 60)) + tick->hours)% 24;
 }
 
-
+/**
+ * @fn		    void clockTask(void *pvParameters)
+ * 
+ * @brief       Runs clock task in parallel
+ * 
+*/
 void clockTask(void *pvParameters) {
-    TimeSinceBoot currentTickTime;
-    TimeSinceBoot currentTime;
-    TimeSinceBoot newTime;
 
-    currentTickTime.hours = 0;
-    currentTickTime.minutes = 0;
-    currentTickTime.seconds = 0;
-    currentTickTime.milliseconds = 0;
+    struct TimeInfo currentTime;
+    struct TimeInfo newTime;
+    uint8_t buffer[64];
+
+    xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeInfo));
+
+    newTime.hours = 0;
+    newTime.minutes = 0;
+    newTime.seconds = 0;
+    newTime.milliseconds = 0;
 
     currentTime.type = TIME_INFO_SEND;
     
-    getTimeSinceBoot(&currentTime, &currentTickTime);
+    getTimeSinceBoot(&currentTime, &newTime);
     uint32_t currentMinute = currentTime.minutes;
+
+    SerialConsoleWriteString("Start clock task\r\n");
+
     while (1)
     {
-        getTimeSinceBoot(&currentTime, &currentTickTime);
-        currentMinute = currentTime.minutes;
+        //snprintf(buffer, 63, "{\"hour\":%d, \"min\": %d, \"sec\": %d}", currentTime.hours, currentTime.minutes, currentTime.seconds);
+        //SerialConsoleWriteString(buffer);
 
-        // update time info every 1 minute
-        if(currentTime.minutes - currentMinute == 1){
+        volatile UBaseType_t uxHighWaterMark;
+	    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+
+         getTimeSinceBoot(&currentTime, &newTime);
+        
+
+         // update time info every 1 minute
+         if(currentTime.minutes - currentMinute >= 1){
             WifiAddTimeToQueue(&currentTime);
-        }
+            SerialConsoleWriteString("send time\r\n");
+            snprintf(buffer, 63, "min: %d\r\n", currentTime.minutes);
+            SerialConsoleWriteString(buffer);
+            currentMinute = currentTime.minutes;
+         }
 
         // if user adjust time
         if (pdPASS == xQueueReceive(xQueueTimeInfo, &newTime, 0)) {
-            if(newTime.type == TIME_INFO_ADJUST){
-                currentTickTime.hours = newTime.hours;
-                currentTickTime.minutes = newTime.minutes;
-
-                getTimeSinceBoot(&currentTime, &currentTickTime);
+            SerialConsoleWriteString("sth. in time queue\r\n");
+            if(newTime.type == TIME_INFO_ADJUST) {
+                SerialConsoleWriteString("adjust time...\r\n");
+                ticknum = xTaskGetTickCount();
+                getTimeSinceBoot(&currentTime, &newTime);
                 WifiAddTimeToQueue(&currentTime);
             }
         }
-        vTaskDelay(1);
+        // Display stack usage
+        uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+        //snprintf(buffer, sizeof(buffer), "Stack high water mark: %lu words left\r\n", uxHighWaterMark);
+        //SerialConsoleWriteString(buffer);
+
+        vTaskDelay(100);
     }
 }

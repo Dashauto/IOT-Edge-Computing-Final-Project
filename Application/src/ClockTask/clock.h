@@ -11,8 +11,8 @@
 #include <asf.h>
 
 
-#define Clock_TASK_SIZE 700
-#define ClockTask_PRIORITY		( configMAX_PRIORITIES - 3 )
+#define Clock_TASK_SIZE 200
+#define ClockTask_PRIORITY		( configMAX_PRIORITIES - 5 )
 
 
 void clockTask(void *pvParameters);

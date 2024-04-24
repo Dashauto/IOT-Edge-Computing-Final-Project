@@ -21,6 +21,7 @@
 #include "main.h"
 #include "stdio_serial.h"
 #include "Sensors_Task/sensorTask.h"
+#include "ClockTask/clock.h"
 #include "ButtonTask.h"
 
 #include "Global.h"
@@ -53,6 +54,8 @@ static TaskHandle_t daemonTaskHandle = NULL;   //!< Daemon task handle
 static TaskHandle_t wifiTaskHandle = NULL;     //!< Wifi task handle
 static TaskHandle_t uiTaskHandle = NULL;       //!< UI task handle
 static TaskHandle_t controlTaskHandle = NULL;  //!< Control task handle
+static TaskHandle_t clockTaskHandle = NULL;     //!< Wifi task handle
+static TaskHandle_t sensorTaskHandle = NULL;     //!< Wifi task handle
 
 
 char bufferPrint[64];  ///< Buffer for daemon task
@@ -133,12 +136,21 @@ static void StartTasks(void)
      SerialConsoleWriteString(bufferPrint);
 	
 	//configMINIMAL_STACK_SIZE
-    if (xTaskCreate(sensorTask, "sensorTask", Sensor_TASK_SIZE, NULL, SensorTask_PRIORITY, NULL) != pdPASS) {
+    if (xTaskCreate(sensorTask, "sensorTask", Sensor_TASK_SIZE, NULL, SensorTask_PRIORITY, &sensorTaskHandle) != pdPASS) {
         SerialConsoleWriteString("ERR: sensor task could not be initialized!\r\n");
     }
 
     snprintf(bufferPrint, 64, "Heap after starting sensor: %d\r\n", xPortGetFreeHeapSize());
     SerialConsoleWriteString(bufferPrint);
+
+    if (xTaskCreate(clockTask, "clockTask", Clock_TASK_SIZE, NULL, ClockTask_PRIORITY, &clockTaskHandle) != pdPASS) {
+        SerialConsoleWriteString("ERR: clock task could not be initialized!\r\n");
+    }
+
+    snprintf(bufferPrint, 64, "Heap after starting clock: %d\r\n", xPortGetFreeHeapSize());
+    SerialConsoleWriteString(bufferPrint);
+
+    
 
     // if (xTaskCreate(LedTask, "LedTask", configMINIMAL_STACK_SIZE, ( void * ) NULL, IMUTask_PRIORITY, NULL) != pdPASS) {
 	//     SerialConsoleWriteString("ERR: Led task could not be initialized!\r\n");
