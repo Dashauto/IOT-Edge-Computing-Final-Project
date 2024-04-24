@@ -49,4 +49,4 @@ Wifi send & receive procedure:
 
    奇怪的bug：SubscribeHandlerClockTopic function converting time error
 
-   当输入时间为 12:00 AM - 02:46 AM 时，改function会将毫秒转换为错误的小时与分钟
+   当输入时间为 12:00 AM - 02:46 AM 时，该function会将毫秒转换为错误的小时与分钟

@@ -726,14 +726,21 @@ void SubscribeHandlerClockTopic(MessageData *msgData)
 		
         //send data to queue
         struct TimeInfo adjustTIme;
-        uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+		uint32_t receivedTime = atoi((char *)msgData->message->payload);
+		//char *end;
+		//uint32_t receivedTime = strtoul((char *)msgData->message->payload, &end, 10);
+		//if (*end != '\0') {
+			//// 处理错误: 字符串中包含非数字字符
+		//}
+        uint32_t convertedTime = receivedTime / 1000;
+		LogMessage(LOG_DEBUG_LVL, "\r\n %d / 1000 = %d", receivedTime, convertedTime);
 
         adjustTIme.type = TIME_INFO_ADJUST;
 		adjustTIme.milliseconds = 0;
 		adjustTIme.seconds = 0;
-        adjustTIme.minutes = (receivedTime / 60) % 60;
-        adjustTIme.hours = (receivedTime / 3600) % 24;
-		LogMessage(LOG_DEBUG_LVL, "\r\n %d, %d, %d", receivedTime, adjustTIme.hours, adjustTIme.minutes);
+        adjustTIme.minutes = (convertedTime / 60) % 60;
+        adjustTIme.hours = (convertedTime / 3600) % 24;
+		LogMessage(LOG_DEBUG_LVL, "\r\n %d, %d\r\n", adjustTIme.hours, adjustTIme.minutes);
 		xQueueSend(xQueueTimeAdjInfo, &adjustTIme, (TickType_t)10);
     }
 }
