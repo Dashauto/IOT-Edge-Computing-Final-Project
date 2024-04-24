@@ -45,7 +45,7 @@ void clockTask(void *pvParameters) {
     struct TimeInfo newTime;
     uint8_t buffer[64];
 
-    xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeInfo));
+    xQueueTimeAdjInfo = xQueueCreate(5, sizeof(struct TimeInfo));
 
     newTime.hours = 0;
     newTime.minutes = 0;
@@ -64,8 +64,8 @@ void clockTask(void *pvParameters) {
         //snprintf(buffer, 63, "{\"hour\":%d, \"min\": %d, \"sec\": %d}", currentTime.hours, currentTime.minutes, currentTime.seconds);
         //SerialConsoleWriteString(buffer);
 
-        volatile UBaseType_t uxHighWaterMark;
-	    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+        //volatile UBaseType_t uxHighWaterMark;
+	    //uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
 
          getTimeSinceBoot(&currentTime, &newTime);
         
@@ -73,24 +73,23 @@ void clockTask(void *pvParameters) {
          // update time info every 1 minute
          if(currentTime.minutes - currentMinute >= 1){
             WifiAddTimeToQueue(&currentTime);
-            SerialConsoleWriteString("send time\r\n");
-            snprintf(buffer, 63, "min: %d\r\n", currentTime.minutes);
-            SerialConsoleWriteString(buffer);
+            //SerialConsoleWriteString("send time\r\n");
             currentMinute = currentTime.minutes;
          }
 
         // if user adjust time
-        if (pdPASS == xQueueReceive(xQueueTimeInfo, &newTime, 0)) {
-            SerialConsoleWriteString("sth. in time queue\r\n");
+        if (pdPASS == xQueueReceive(xQueueTimeAdjInfo, &newTime, 0)) {
             if(newTime.type == TIME_INFO_ADJUST) {
-                SerialConsoleWriteString("adjust time...\r\n");
+                SerialConsoleWriteString("\r\n adjust time...\r\n");
+				snprintf(buffer, 63, "{\"hour\":%d, \"min\": %d, \"sec\": %d}", newTime.hours, newTime.minutes, newTime.seconds);
+				SerialConsoleWriteString(buffer);
                 ticknum = xTaskGetTickCount();
                 getTimeSinceBoot(&currentTime, &newTime);
                 WifiAddTimeToQueue(&currentTime);
             }
         }
         // Display stack usage
-        uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+        //uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
         //snprintf(buffer, sizeof(buffer), "Stack high water mark: %lu words left\r\n", uxHighWaterMark);
         //SerialConsoleWriteString(buffer);
 

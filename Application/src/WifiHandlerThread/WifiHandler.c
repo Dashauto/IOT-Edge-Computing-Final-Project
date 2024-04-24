@@ -32,6 +32,7 @@ QueueHandle_t xQueueImuBuffer = NULL;       ///< Queue to send IMU data to the c
 QueueHandle_t xQueueDistanceBuffer = NULL;  ///< Queue to send the distance to the cloud
 
 QueueHandle_t xQueueTimeInfo = NULL;
+QueueHandle_t xQueueTimeAdjInfo = NULL;
 
 /*HTTP DOWNLOAD RELATED DEFINES AND VARIABLES*/
 
@@ -713,23 +714,27 @@ void SubscribeHandler(MessageData *msgData)
 
 void SubscribeHandlerClockTopic(MessageData *msgData)
 {
-    /* You received publish message which you had subscribed. */
-    /* Print Topic and message */
-    LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
-    LogMessage(LOG_DEBUG_LVL, " >> ");
-    LogMessage(LOG_DEBUG_LVL, "%.*s", msgData->message->payloadlen, (char *)msgData->message->payload);
-
     // Handle TIMEData message
-    if (strncmp((char *)msgData->topicName->lenstring.data, TIME_ADJUST_TOPIC, msgData->message->payloadlen) == 0) {
+    if (strncmp((char *)msgData->topicName->lenstring.data, TIME_ADJUST_TOPIC, msgData->topicName->lenstring.len) == 0) {
+		
+		/* You received publish message which you had subscribed. */
+		/* Print Topic and message */
+		LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
+		LogMessage(LOG_DEBUG_LVL, " >> ");
+		LogMessage(LOG_DEBUG_LVL, "%.*s", msgData->message->payloadlen, (char *)msgData->message->payload);
+		
+		
         //send data to queue
         struct TimeInfo adjustTIme;
-        uint32_t receivedTime = atoi((char *)msgData->message->payload);
+        uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
 
         adjustTIme.type = TIME_INFO_ADJUST;
-        adjustTIme.minutes = (receivedTime / (1000 * 60)) % 60;
-        adjustTIme.hours = (receivedTime / (1000 * 60 * 60))% 24;
-
-        WifiAddTimeToQueue(&adjustTIme);
+		adjustTIme.milliseconds = 0;
+		adjustTIme.seconds = 0;
+        adjustTIme.minutes = (receivedTime / 60) % 60;
+        adjustTIme.hours = (receivedTime / 3600) % 24;
+		LogMessage(LOG_DEBUG_LVL, "\r\n %d, %d, %d", receivedTime, adjustTIme.hours, adjustTIme.minutes);
+		xQueueSend(xQueueTimeAdjInfo, &adjustTIme, (TickType_t)10);
     }
 }
 
@@ -775,7 +780,7 @@ static void mqtt_callback(struct mqtt_module *module_inst, int type, union mqtt_
                 //mqtt_subscribe(module_inst, LED_TOPIC, 2, SubscribeHandlerLedTopic);
                 //mqtt_subscribe(module_inst, IMU_TOPIC, 2, SubscribeHandlerImuTopic);
                 //mqtt_subscribe(module_inst, LED_TOPIC, 2, SubscribeHandler);
-                mqtt_subscribe(module_inst, TIME_TOPIC, 2, SubscribeHandler);
+                mqtt_subscribe(module_inst, TIME_ADJUST_TOPIC, 2, SubscribeHandlerClockTopic);
                 /* Enable USART receiving callback. */
 
                 LogMessage(LOG_DEBUG_LVL, "MQTT Connected\r\n");
@@ -1017,9 +1022,9 @@ static void MQTT_HandleTimeMessages(void)
     struct TimeInfo timeToSend;
     if (pdPASS == xQueueReceive(xQueueTimeInfo, &timeToSend, 0)) {
         if(timeToSend.type == TIME_INFO_SEND) {
-            LogMessage(LOG_DEBUG_LVL, mqtt_msg);
-            LogMessage(LOG_DEBUG_LVL, "\r\n");
             snprintf(mqtt_msg, 63, "{\"hour\":%d, \"min\": %d}", timeToSend.hours, timeToSend.minutes);
+			LogMessage(LOG_DEBUG_LVL, mqtt_msg);
+			LogMessage(LOG_DEBUG_LVL, "\r\n");
             mqtt_publish(&mqtt_inst, TIME_TOPIC, mqtt_msg, strlen(mqtt_msg), 1, 0);
         }
     }
@@ -1046,6 +1051,7 @@ void vWifiTask(void *pvParameters)
     xQueueDistanceBuffer = xQueueCreate(5, sizeof(uint16_t));
 
     xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeInfo));
+	xQueueTimeAdjInfo = xQueueCreate(5, sizeof(struct TimeInfo));
 
     if (xQueueWifiState == NULL || xQueueImuBuffer == NULL || xQueueGameBuffer == NULL || xQueueDistanceBuffer == NULL) {
         SerialConsoleWriteString("ERROR Initializing Wifi Data queues!\r\n");
@@ -1135,18 +1141,18 @@ void vWifiTask(void *pvParameters)
 
         // Check if we need to publish something. In this example, we publish the "temperature" when the button was pressed.
         
-        // if (isPressed) {
+        if (isPressed) {
         //     mqtt_publish(&mqtt_inst, SENSOR_TOPIC, "1", 1, 1, 0);
         //     LogMessage(LOG_DEBUG_LVL, "MQTT send 1\r\n");
         //     pressed_before = isPressed;
-        //     isPressed = false;
-        // } else if(!isPressed && pressed_before) {
+            isPressed = false;
+        } else if(!isPressed && pressed_before) {
         //     // LogMessage(LOG_DEBUG_LVL, "MQTT send 0\r\n");
         //     mqtt_publish(&mqtt_inst, SENSOR_TOPIC, "0", 1, 1, 0);
         //     LogMessage(LOG_DEBUG_LVL, "MQTT send 0\r\n");
-        //     pressed_before = isPressed;
-        // }
-        //pressed_before = isPressed;
+            pressed_before = isPressed;
+        }
+        pressed_before = isPressed;
 
         // Check if button is pressed in Node-Red
         //mqtt_subscribe(&mqtt_inst, SENSOR_TOPIC, 2, 0);
@@ -1221,20 +1227,4 @@ int WifiAddTimeToQueue(struct TimeInfo *time)
 {
     int error = xQueueSend(xQueueTimeInfo, time, (TickType_t)10);
     return error;
-}
-
-/**
- * @brief Adds a TimeInfo item to the queue to be sent via MQTT or another communication method.
- *        The TimeInfo data must be prepared in advance, including setting any unused bytes to 0xFF.
- * @param time Pointer to the TimeInfo structure containing the time data to queue.
- * @return Returns pdPASS (1) if the data can be added to the queue, otherwise pdFAIL (0) if the queue is full.
- * @note This function assumes the queue xQueueTimeInfo has been created and is ready to use.
- */
-int WifiReadTimeFromQueue(struct TimeInfo *time) {
-    BaseType_t result = xQueueSend(xQueueTimeInfo, (void *)time, (TickType_t)10);
-    if (result == pdPASS) {
-        return pdTRUE; // Successfully added to queue
-    } else {
-        return pdFALSE; // Failed to add to queue, possibly because the queue is full
-    }
 }

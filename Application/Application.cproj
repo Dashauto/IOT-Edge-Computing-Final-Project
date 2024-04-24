@@ -1287,12 +1287,6 @@
     <Compile Include="src\ASF\common\services\crc32\crc32.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\ButtonTask.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\ButtonTask.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\ClockTask\clock.c">
       <SubType>compile</SubType>
     </Compile>
@@ -1300,12 +1294,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\Global.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\LedTask.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\LedTask.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\PWM\pwm.c">
