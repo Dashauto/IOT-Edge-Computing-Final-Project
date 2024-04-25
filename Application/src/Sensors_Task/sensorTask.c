@@ -102,25 +102,33 @@ void sensorTask(void *pvParameters)
 	ModeType mode = SMART;
 	
 	while(1)
-	{    
-		switch(mode){
+	{   /*
+		判断mode: if (pdPASS == xQueueReceive(xQueueModeInfo, &mode, 0))
+		struct balaba{
+			mode;
+			openButton;
+			closeButton;
+		};
+		*/
+		switch(mode) {
 			
 			case(SMART): {
 				smart_open();
 				break;
 			}
-			case(MANUAL): {
-				manual_open();
-				break;
-			}
+			// case(MANUAL): {
+			// 	manual_open();
+			// 	break;
+			// }
 			case(TIMER): {
 				timer_open();
 				break;
 			}
-			default:
-                mode = SMART;
-                break;
+			// default:
+            //     mode = SMART;
+            //     break;
 		}
+		manual_open();
 
 		//LCD_Sensor(temperature, humidity, voc_index, adc_res);
 
@@ -162,8 +170,22 @@ static void smart_open(void) {
 	}
 }
 
-static void manual_open(void){}
-static void timer_open(void){}
+static void manual_open(void) {
+	/*
+	if user press open button && curtainClosed:  Open the curtain
+	if user press close button && !curtainClosed: Close the curtain
+	*/
+}
+
+
+static void timer_open(void){
+	// add a new Queue
+	/*
+	if current time = openTime && curtainClosed: Open the curtain
+	if current time = closeTime && !curtainClosed: Closed the curtain
+	*/
+
+}
 
 int getLightIntensity(void) {
 	// read adc value

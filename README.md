@@ -28,7 +28,7 @@ xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeStruct));  // time data
 
 Wifi send & receive procedure:
 
-将XXX改为合适的内容：
+将XXX和YYY改为合适的内容：
 
 1. 在头文件中定义要传的struct
 
@@ -51,40 +51,15 @@ Wifi send & receive procedure:
 7. 定义 [void SubscribeHandlerXXXTopic(MessageData *msgData)]函数
 
 
-Logic:
-
-在.h中创建 struct OperationMode
-
-
-ModeType mode
-
-mode = SMART;
-
-while(1) {
-
-   switch(mode){
-      case(SMART):{smart_open();   break;}
-      case(MANUAL): {manual_open();   break;}
-      case(TIMER): {timer_open();   break;}
-   }
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## 0424 update
 
    奇怪的bug：SubscribeHandlerClockTopic function converting time error
 
    当输入时间为 12:00 AM - 02:46 AM 时，该function会将毫秒转换为错误的小时与分钟
+
+## 0424 update
+
+   static void manual_open(void){} needs to be finished
+
+   static void timer_open(void){} needs to be finished
