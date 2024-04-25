@@ -12,17 +12,6 @@ struct tcc_config config_tcc;
 
 void configure_tc(void)
 {
-    // struct tc_config config_tc;
-    // tc_get_config_defaults(&config_tc);
-    // config_tc.counter_size = TC_COUNTER_SIZE_16BIT;
-    // config_tc.wave_generation = TC_WAVE_GENERATION_NORMAL_PWM;
-    // config_tc.counter_16_bit.compare_capture_channel[0] = (0xFFFF / 4);
-    // config_tc.pwm_channel[0].enabled = true;
-    // config_tc.pwm_channel[0].pin_out = PWM_OUT_PIN;
-    // config_tc.pwm_channel[0].pin_mux = PWM_OUT_MUX;
-    // tc_init(&tc_instance, PWM_MODULE, &config_tc);
-
-    
     tcc_get_config_defaults(&config_tcc, TCC1);
     config_tcc.counter.clock_prescaler = TCC_CLOCK_PRESCALER_DIV1; // Adjust as needed
     config_tcc.counter.period = (0xFFFF / 2); // Implement this function based on your needs

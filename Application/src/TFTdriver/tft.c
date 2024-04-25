@@ -3,13 +3,8 @@
 // and https://github.com/adafruit/Adafruit-ST7735-Library
 
 
-// B8 is turned into SDI1 but is not used or connected to anything
-
 #include "tft.h"
 
-//#include "newservo/newservo.h"
-//#include "bme680/bme680.h"
-//#include "DZ.h"
 #define MAX_X 160
 #define MAX_Y 128
 
@@ -311,9 +306,9 @@ void LCD_init() {
 	spi_select_slave(&spi_master_instance, &slave, false);
 	//delay_ms(10000);
 	vTaskDelay(1000);
-  LCD_command(ST7735_SWRESET);//software reset
-  //delay_ms(50);
-  vTaskDelay(50);
+	LCD_command(ST7735_SWRESET);//software reset
+	//delay_ms(50);
+	vTaskDelay(50);
 	LCD_command(ST7735_SLPOUT);//exit sleep
 	//delay_ms(5);
 	vTaskDelay(5);
@@ -465,18 +460,6 @@ void LCD_clearScreen(unsigned short color) {
 		LCD_data16(color);
 	}
 }
-/*
-void dingzhen(void){
-	LCD_setAddr(0,0,_GRAMWIDTH,_GRAMHEIGH);
-	//LCD_data16(BLACK);
-	 int flag = 0;
-		for (int i = 0;i <_GRAMWIDTH ;i++){
-			for(int j=0;j<_GRAMHEIGH;j++){
-				LCD_setAddr(i,j,_GRAMWIDTH,_GRAMHEIGH);
-				LCD_data16(gImage_DZ[flag++]);
-			}
-		}
-}*/
 
 
 /**
@@ -492,21 +475,10 @@ void LCD_menu(void)
 	LCD_clearScreen(MYCOLOR);
 	drawString(10,20,"Magic Curtain Opener Pro",WHITE, MYCOLOR);
 
-	
 	drawString(20, 70, "Temperature: ", WHITE, MYCOLOR);
 	drawString(20, 80, "Humidity: ", WHITE, MYCOLOR);
 	drawString(20, 90, "VOC: ", WHITE, MYCOLOR);
 	drawString(20, 100, "Light: ", WHITE, MYCOLOR);
-	
-	// char buffer[20];
-	// memset(buffer,0,sizeof(buffer));
-	// float temp = getTemperature();
-	// float hum = getHumidity();
-	// snprintf(buffer,sizeof(buffer),"Temperature: %d C",(int)temp);
-	// drawString(20,70,buffer,BLACK,WHITE);
-	// snprintf(buffer,sizeof(buffer),"Humidity: %d %%",(int)hum);
-	// drawString(20,80,buffer,BLACK,WHITE);
-	// drawString(20,100,buffer,BLACK,WHITE);
 }
 
 
@@ -520,41 +492,43 @@ void LCD_menu(void)
 */
 void LCD_Sensor(int temp, int hum, int voc, int adc, int hour, int minute)
 {
-	//LCD_menu();
 	char buffer[20];
 	memset(buffer, 0, sizeof(buffer));
 
-	drawRectangle(60, 40, 90, 49, MYCOLOR);
+	// clear number display area before display
+	drawRectangle(60, 40, 100, 49, MYCOLOR);
 	drawRectangle(95, 70, 120, 79, MYCOLOR);
 	drawRectangle(75, 80, 105, 89, MYCOLOR);
 	drawRectangle(45, 90, 60, 99, MYCOLOR);
-	drawRectangle(55, 100, 80, 110, MYCOLOR);
-	//snprintf(buffer, sizeof(buffer), "Temperature: %d C", temp);
-	//drawString(20, 70, buffer, WHITE, MYCOLOR);
-//
-	//snprintf(buffer, sizeof(buffer), "Humidity: %d %%", hum);
-	//drawString(20, 80, buffer, WHITE, MYCOLOR);
-//
-	//snprintf(buffer, sizeof(buffer), "VOC: %d", voc);
-	//drawString(20, 90, buffer, WHITE, MYCOLOR);
-//
-	//snprintf(buffer, sizeof(buffer), "ADC: %d", adc);
-	//// drawRectangle(20, 100, , , unsigned char c)
-	//drawString(20, 100, buffer, WHITE, MYCOLOR);
+	drawRectangle(55, 100, 85, 110, MYCOLOR);
 
+	// time
 	snprintf(buffer, sizeof(buffer), "%d: %d", hour, minute);
 	drawString(60, 40, buffer, WHITE, MYCOLOR);
 	
+	// temperature
 	snprintf(buffer, sizeof(buffer), "%d C", temp);
 	drawString(95, 70, buffer, WHITE, MYCOLOR);
 
+	// humidity
 	snprintf(buffer, sizeof(buffer), " %d %%", hum);
 	drawString(75, 80, buffer, WHITE, MYCOLOR);
 
+	// VOC value
 	snprintf(buffer, sizeof(buffer), " %d", voc);
 	drawString(45, 90, buffer, WHITE, MYCOLOR);
 
+	// light intensity
 	snprintf(buffer, sizeof(buffer), " %d %%", adc);
-	// drawRectangle(20, 100, , , unsigned char c)
 	drawString(55, 100, buffer, WHITE, MYCOLOR);
+}
+
+
+void LCD_Time_Update_Only(int hour, int minute)
+{
+	char buffer[20];
+	memset(buffer, 0, sizeof(buffer));
+	drawRectangle(60, 40, 100, 49, MYCOLOR);
+	snprintf(buffer, sizeof(buffer), "%d: %d", hour, minute);
+	drawString(60, 40, buffer, WHITE, MYCOLOR);
 }

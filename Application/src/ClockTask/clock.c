@@ -84,7 +84,7 @@ void clockTask(void *pvParameters) {
         
 
          // update time info every 1 minute
-         if(currentTime.minutes - currentMinute >= 10){
+         if(currentTime.minutes - currentMinute >= 1){
             // send current time to web
             WifiAddTimeToQueue(&currentTime);
             
@@ -109,6 +109,7 @@ void clockTask(void *pvParameters) {
                 ticknum = xTaskGetTickCount();
                 getTimeSinceBoot(&currentTime, &newTime);
                 WifiAddTimeToQueue(&currentTime);
+                LCD_Time_Update_Only(currentTime.hours, currentTime.minutes);
             }
         }
         // Display stack usage

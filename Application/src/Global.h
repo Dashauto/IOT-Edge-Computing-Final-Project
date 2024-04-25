@@ -13,7 +13,6 @@
 #include "queue.h"
 extern QueueHandle_t xQueueTimeInfo;
 extern QueueHandle_t xQueueTimeAdjInfo;        ///< Queue to send and receive time to the cloud
-//extern QueueHandle_t xQueueSensorBuffer;
 extern QueueHandle_t xQueueButton;
 extern QueueHandle_t xQueueSetTime;
 #endif // GLOBAL_H

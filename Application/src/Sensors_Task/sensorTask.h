@@ -1,10 +1,14 @@
-/*
- *  sensorTask.h
- *               
- *  Created: 4/3/2024 4:32:06 PM
- *  Author: T08
- */ 
+/**
+ * @file      sensorTask.c
+ * @brief     File to handle HTTP Download and MQTT support
+ * @author    T08
+ * @date      4/3/2024 4:32:06 PM
 
+ ******************************************************************************/
+
+/******************************************************************************
+ * Includes
+ ******************************************************************************/
 
 #ifndef SENSOR_TASK_H_
 #define SENSOR_TASK_H_
@@ -12,9 +16,16 @@
 #include <string.h> // For memset
 #include <asf.h>
 
+/******************************************************************************
+ * Variables
+ ******************************************************************************/
 
 #define Sensor_TASK_SIZE 700
 #define SensorTask_PRIORITY		( configMAX_PRIORITIES - 3)
+
+/******************************************************************************
+ * Function Prototypes
+ ******************************************************************************/
 
 void sensorTask(void *pvParameters);
 void configure_button(void);

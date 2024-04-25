@@ -45,12 +45,6 @@ int SGP40_Init(void){
     //Sending wakeup command to initialize
     uint8_t cmd[] = {SGP40_CMD_GET_SERIAL_ID1, SGP40_CMD_GET_SERIAL_ID2};
 
-    // SGP40Data.address = SGP40_ADDR;
-    // SGP40Data.msgOut = (const uint8_t *) &cmd[0];
-    // SGP40Data.lenOut = sizeof(cmd);
-    // SGP40Data.lenIn = 9; // Response length including CRC [bytes]
-    // int32_t error = I2cWriteDataWait(&SGP40Data, WAIT_TIME);
-
     SGP40Data.address = SGP40_ADDR;
     SGP40Data.msgOut = (const uint8_t*) &cmd[0];
     SGP40Data.lenOut = sizeof(cmd);
@@ -76,19 +70,6 @@ int SGP40_Init(void){
     SerialConsoleWriteString("Serial Number: ");
     SerialConsoleWriteString(buffer1);
     SerialConsoleWriteString("\r\n");
-
-    //snprintf((char *) buffer1, sizeof(buffer1), "Serial Number : %d\r\n", buffer);
-	  //SerialConsoleWriteString(buffer1);
-
-    // //Self Test
-    // uint8_t cmd[] = {SGP40_CMD_Execute_Self_Test1, SGP40_CMD_Execute_Self_Test1};
-    // SGP40Data.msgOut = (const uint8_t *) &cmd[0];
-    // SGP40Data.lenOut = sizeof(cmd);
-    // SGP40Data.lenIn = 0;
-    // int32_t error = I2cWriteDataWait(&SGP40Data, WAIT_TIME);
-    // if (ERROR_NONE != error) {
-    //     SerialConsoleWriteString("SGP Self Test Fail!/r/n");
-    // }
 
     return error;
 }

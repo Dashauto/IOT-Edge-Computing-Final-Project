@@ -22,10 +22,6 @@
 #include "stdio_serial.h"
 #include "Sensors_Task/sensorTask.h"
 #include "ClockTask/clock.h"
-#include "ButtonTask.h"
-
-#include "Global.h"
-//#include "queue.h"
 
 
 /****
@@ -129,13 +125,12 @@ static void StartTasks(void)
 	snprintf(bufferPrint, 64, "Heap after starting CLI: %d\r\n", xPortGetFreeHeapSize());
 	SerialConsoleWriteString(bufferPrint);
 
-     if (xTaskCreate(vWifiTask, "WIFI_TASK", WIFI_TASK_SIZE, NULL, WIFI_PRIORITY, &wifiTaskHandle) != pdPASS) {
-     SerialConsoleWriteString("ERR: WIFI task could not be initialized!\r\n");
-     }
-     snprintf(bufferPrint, 64, "Heap after starting WIFI: %d\r\n", xPortGetFreeHeapSize());
-     SerialConsoleWriteString(bufferPrint);
+    if (xTaskCreate(vWifiTask, "WIFI_TASK", WIFI_TASK_SIZE, NULL, WIFI_PRIORITY, &wifiTaskHandle) != pdPASS) {
+        SerialConsoleWriteString("ERR: WIFI task could not be initialized!\r\n");
+    }
+    snprintf(bufferPrint, 64, "Heap after starting WIFI: %d\r\n", xPortGetFreeHeapSize());
+    SerialConsoleWriteString(bufferPrint);
 	
-	//configMINIMAL_STACK_SIZE
     if (xTaskCreate(sensorTask, "sensorTask", Sensor_TASK_SIZE, NULL, SensorTask_PRIORITY, &sensorTaskHandle) != pdPASS) {
         SerialConsoleWriteString("ERR: sensor task could not be initialized!\r\n");
     }
@@ -149,18 +144,6 @@ static void StartTasks(void)
 
     snprintf(bufferPrint, 64, "Heap after starting clock: %d\r\n", xPortGetFreeHeapSize());
     SerialConsoleWriteString(bufferPrint);
-
-    
-
-    // if (xTaskCreate(LedTask, "LedTask", configMINIMAL_STACK_SIZE, ( void * ) NULL, IMUTask_PRIORITY, NULL) != pdPASS) {
-	//     SerialConsoleWriteString("ERR: Led task could not be initialized!\r\n");
-    // }
-
-    // if (xTaskCreate(ButtonTask, "ButtonTask", configMINIMAL_STACK_SIZE, ( void * ) NULL, IMUTask_PRIORITY, NULL) != pdPASS) {
-	//     SerialConsoleWriteString("ERR: Button task could not be initialized!\r\n");
-    // }
-    // snprintf(bufferPrint, 64, "Heap after starting BUTTON: %d\r\n", xPortGetFreeHeapSize());
-    // SerialConsoleWriteString(bufferPrint);
 }
 
 void vApplicationMallocFailedHook(void)

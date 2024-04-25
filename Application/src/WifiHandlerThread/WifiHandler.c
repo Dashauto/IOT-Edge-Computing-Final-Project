@@ -27,9 +27,6 @@ volatile char mqtt_msg_temp[64] = "{\"d\":{\"temp\":17}}\"";
 volatile uint32_t temperature = 1;
 int8_t wifiStateMachine = WIFI_MQTT_INIT;   ///< Global variable that determines the state of the WIFI handler.
 QueueHandle_t xQueueWifiState = NULL;       ///< Queue to determine the Wifi state from other threads.
-QueueHandle_t xQueueGameBuffer = NULL;      ///< Queue to send the next play to the cloud
-QueueHandle_t xQueueImuBuffer = NULL;       ///< Queue to send IMU data to the cloud
-QueueHandle_t xQueueDistanceBuffer = NULL;  ///< Queue to send the distance to the cloud
 
 QueueHandle_t xQueueTimeInfo = NULL;        ///< Queue to send the time to the cloud
 QueueHandle_t xQueueTimeAdjInfo = NULL;     ///< Queue to receive adjusted time from the cloud
@@ -84,8 +81,6 @@ static unsigned char mqtt_send_buffer[MAIN_MQTT_BUFFER_SIZE];
  ******************************************************************************/
 static void MQTT_InitRoutine(void);
 
-static void MQTT_HandleGameMessages(void);
-static void MQTT_HandleImuMessages(void);
 static void MQTT_HandleTimeMessages(void);
 static void MQTT_HandleSensorMessages(void);
 
@@ -637,89 +632,10 @@ static void socket_resolve_handler(uint8_t *doamin_name, uint32_t server_ip)
 }
 
 /**
- * \brief Callback to receive the subscribed Message.
- *
- * \param[in] msgData Data to be received.
+ * \brief Subscribe to Time Adjust Topic
+ * \param[in] msgData Message Data
+ * \return
  */
-
-void SubscribeHandlerLedTopic(MessageData *msgData)
-{
-    uint8_t rgb[3] = {0, 0, 0};
-    LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
-    // Will receive something of the style "rgb(222, 224, 189)"
-    if (strncmp(msgData->message->payload, "rgb(", 4) == 0) {
-        char *p = (char *)&msgData->message->payload[4];
-        int nb = 0;
-        while (nb <= 2 && *p) {
-            rgb[nb++] = strtol(p, &p, 10);
-            if (*p != ',') break;
-            p++; /* skip, */
-        }
-        LogMessage(LOG_DEBUG_LVL, "\r\nRGB %d %d %d\r\n", rgb[0], rgb[1], rgb[2]);
-    }
-}
-
-void SubscribeHandlerGameTopic(MessageData *msgData)
-{
-    struct GameDataPacket game;
-    memset(game.game, 0xff, sizeof(game.game));
-
-    // Parse input. The start string must be '{"game":['
-    if (strncmp(msgData->message->payload, "{\"game\":[", 9) == 0) {
-        LogMessage(LOG_DEBUG_LVL, "\r\nGame message received!\r\n");
-        LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
-        LogMessage(LOG_DEBUG_LVL, "%.*s", msgData->message->payloadlen, (char *)msgData->message->payload);
-
-        int nb = 0;
-        char *p = &msgData->message->payload[9];
-        while (nb < GAME_SIZE && *p) {
-            game.game[nb++] = strtol(p, &p, 10);
-            if (*p != ',') break;
-            p++; /* skip, */
-        }
-        LogMessage(LOG_DEBUG_LVL, "\r\nParsed Command: ");
-        for (int i = 0; i < GAME_SIZE; i++) {
-            LogMessage(LOG_DEBUG_LVL, "%d,", game.game[i]);
-        }
-
-    } else {
-        LogMessage(LOG_DEBUG_LVL, "\r\nGame message received but not understood!\r\n");
-        LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
-        LogMessage(LOG_DEBUG_LVL, "%.*s", msgData->message->payloadlen, (char *)msgData->message->payload);
-    }
-}
-
-void SubscribeHandlerImuTopic(MessageData *msgData)
-{
-    LogMessage(LOG_DEBUG_LVL, "\r\nIMU topic received!\r\n");
-    LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
-}
-
-void SubscribeHandlerDistanceTopic(MessageData *msgData)
-{
-    LogMessage(LOG_DEBUG_LVL, "\r\nDistance topic received!\r\n");
-    LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
-}
-
-
-void SubscribeHandler(MessageData *msgData)
-{
-    /* You received publish message which you had subscribed. */
-    /* Print Topic and message */
-    LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
-    LogMessage(LOG_DEBUG_LVL, " >> ");
-    LogMessage(LOG_DEBUG_LVL, "%.*s", msgData->message->payloadlen, (char *)msgData->message->payload);
-
-    // Handle LedData message
-    if (strncmp((char *)msgData->topicName->lenstring.data, LED_TOPIC, msgData->message->payloadlen) == 0) {
-        if (strncmp((char *)msgData->message->payload, LED_TOPIC_LED_OFF, msgData->message->payloadlen) == 0) {
-            port_pin_set_output_level(LED_0_PIN, LED_0_INACTIVE);
-        } else if (strncmp((char *)msgData->message->payload, LED_TOPIC_LED_ON, msgData->message->payloadlen) == 0) {
-            port_pin_set_output_level(LED_0_PIN, LED_0_ACTIVE);
-        }
-    }
-}
-
 void SubscribeHandlerClockTopic(MessageData *msgData)
 {
     // Handle TIMEData message
@@ -750,6 +666,11 @@ void SubscribeHandlerClockTopic(MessageData *msgData)
     }
 }
 
+/**
+ * \brief Subscribe to button Topic
+ * \param[in] msgData Message Data
+ * \return
+ */
 void SubscribeHandlerButtonTopic(MessageData *msgData) {
     if (strncmp((char *)msgData->topicName->lenstring.data, Button_TOPIC, msgData->topicName->lenstring.len) == 0) {
         struct ButtonDataPacket button;
@@ -792,6 +713,11 @@ void SubscribeHandlerButtonTopic(MessageData *msgData) {
     }
 }
 
+/**
+ * \brief Subscribe to Open Topic
+ * \param[in] msgData Message Data
+ * \return
+ */
 void SubscribeHandlerOpenTopic(MessageData *msgData) {
 	// Handle TIMEData message
 	if (strncmp((char *)msgData->topicName->lenstring.data, TIME_TO_OPEN, msgData->topicName->lenstring.len) == 0) {
@@ -822,6 +748,11 @@ void SubscribeHandlerOpenTopic(MessageData *msgData) {
 	}
 }
 
+/**
+ * \brief Subscribe to Close Topic
+ * \param[in] msgData Message Data
+ * \return
+ */
 void SubscribeHandlerCloseTopic(MessageData *msgData) {
 	// Handle TIMEData message
 	if (strncmp((char *)msgData->topicName->lenstring.data, TIME_TO_CLOSE, msgData->topicName->lenstring.len) == 0) {
@@ -887,10 +818,6 @@ static void mqtt_callback(struct mqtt_module *module_inst, int type, union mqtt_
         case MQTT_CALLBACK_CONNECTED:
             if (data->connected.result == MQTT_CONN_RESULT_ACCEPT) {
                 /* Subscribe chat topic. */
-                //mqtt_subscribe(module_inst, GAME_TOPIC_IN, 2, SubscribeHandlerGameTopic);
-                //mqtt_subscribe(module_inst, LED_TOPIC, 2, SubscribeHandlerLedTopic);
-                //mqtt_subscribe(module_inst, IMU_TOPIC, 2, SubscribeHandlerImuTopic);
-                //mqtt_subscribe(module_inst, LED_TOPIC, 2, SubscribeHandler);
                 mqtt_subscribe(module_inst, TIME_ADJUST_TOPIC, 2, SubscribeHandlerClockTopic);
                 mqtt_subscribe(module_inst, Button_TOPIC, 2, SubscribeHandlerButtonTopic);
 				mqtt_subscribe(module_inst, TIME_TO_OPEN, 2, SubscribeHandlerOpenTopic);
@@ -975,12 +902,7 @@ volatile bool isPressed = false;
 void extint_detection_callback(void)
 {
     // Publish some data after a button press and release. Note: just an example! This is not the most elegant way of doing this!
-    temperature++;
-    if (temperature > 40) temperature = 1;
-    snprintf(mqtt_msg_temp, 63, "{\"d\":{\"temp\":%d}}", temperature);
     isPressed = true;
-    // Published in the Wifi thread main loop
-
 }
 
 bool button_status(void){
@@ -1090,8 +1012,6 @@ static void MQTT_HandleTransactions(void)
     sw_timer_task(&swt_module_inst);
 
     // Check if data has to be sent!
-    MQTT_HandleGameMessages();
-    MQTT_HandleImuMessages();
     MQTT_HandleTimeMessages();
     MQTT_HandleSensorMessages();
 
@@ -1099,40 +1019,12 @@ static void MQTT_HandleTransactions(void)
     if (mqtt_inst.isConnected) mqtt_yield(&mqtt_inst, 100);
 }
 
-static void MQTT_HandleImuMessages(void)
-{
-    struct ImuDataPacket imuDataVar;
-    if (pdPASS == xQueueReceive(xQueueImuBuffer, &imuDataVar, 0)) {
-        snprintf(mqtt_msg, 63, "{\"imux\":%d, \"imuy\": %d, \"imuz\": %d}", imuDataVar.xmg, imuDataVar.ymg, imuDataVar.zmg);
-        mqtt_publish(&mqtt_inst, SENSOR_TOPIC, mqtt_msg, strlen(mqtt_msg), 1, 0);
-    }
-}
-
-static void MQTT_HandleGameMessages(void)
-{
-    struct GameDataPacket gamePacket;
-    if (pdPASS == xQueueReceive(xQueueGameBuffer, &gamePacket, 0)) {
-        snprintf(mqtt_msg, 63, "{\"game\":[");
-        for (int iter = 0; iter < GAME_SIZE; iter++) {
-            char numGame[5];
-            if (gamePacket.game[iter] != 0xFF) {
-                snprintf(numGame, 3, "%d", gamePacket.game[iter]);
-                strcat(mqtt_msg, numGame);
-                if (gamePacket.game[iter + 1] != 0xFF && iter + 1 < GAME_SIZE) {
-                    snprintf(numGame, 5, ",");
-                    strcat(mqtt_msg, numGame);
-                }
-            } else {
-                break;
-            }
-        }
-        strcat(mqtt_msg, "]}");
-        LogMessage(LOG_DEBUG_LVL, mqtt_msg);
-        LogMessage(LOG_DEBUG_LVL, "\r\n");
-        mqtt_publish(&mqtt_inst, GAME_TOPIC_OUT, mqtt_msg, strlen(mqtt_msg), 1, 0);
-    }
-}
-
+/**
+ static void MQTT_HandleGameMessages(void)
+ * @brief	Routine to handle Game messages
+ * @note
+ *
+*/
 static void MQTT_HandleTimeMessages(void)
 {
     struct TimeInfo timeToSend;
@@ -1146,6 +1038,12 @@ static void MQTT_HandleTimeMessages(void)
     }
 }
 
+/**
+ static void MQTT_HandleGameMessages(void)
+ * @brief	Routine to handle Game messages
+ * @note
+ *
+*/
 static void MQTT_HandleSensorMessages(void)
 {
     struct SensorDataPacket sensorDataVar;
@@ -1173,9 +1071,6 @@ void vWifiTask(void *pvParameters)
     init_state();
     // Create buffers to send data
     xQueueWifiState = xQueueCreate(5, sizeof(uint32_t));
-    xQueueImuBuffer = xQueueCreate(5, sizeof(struct ImuDataPacket));
-    xQueueGameBuffer = xQueueCreate(2, sizeof(struct GameDataPacket));
-    xQueueDistanceBuffer = xQueueCreate(5, sizeof(uint16_t));
 
     xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeInfo));
 	xQueueTimeAdjInfo = xQueueCreate(5, sizeof(struct TimeInfo));
@@ -1183,7 +1078,7 @@ void vWifiTask(void *pvParameters)
     xQueueButton = xQueueCreate(5, sizeof(struct ButtonDataPacket));
 	xQueueSetTime = xQueueCreate(5, sizeof(struct TimeInfo));
 
-    if (xQueueWifiState == NULL || xQueueImuBuffer == NULL || xQueueGameBuffer == NULL || xQueueDistanceBuffer == NULL) {
+    if (xQueueWifiState == NULL || xQueueTimeInfo == NULL || xQueueTimeAdjInfo == NULL || xQueueSensorBuffer == NULL || xQueueButton == NULL|| xQueueSetTime == NULL) {
         SerialConsoleWriteString("ERROR Initializing Wifi Data queues!\r\n");
     }
 
@@ -1292,6 +1187,13 @@ void vWifiTask(void *pvParameters)
     return;
 }
 
+/**
+ void WifiHandlerSetState(uint8_t state)
+ * @brief	transmit the state to the Wifi Handler
+ * @param	state: state to transmit
+ * @note
+ *
+*/
 void WifiHandlerSetState(uint8_t state)
 {
     if (state <= WIFI_DOWNLOAD_HANDLE) {
@@ -1299,59 +1201,13 @@ void WifiHandlerSetState(uint8_t state)
     }
 }
 
-/**
- void WifiAddImuDataToQueue(struct ImuDataPacket* imuPacket)
- * @brief	Adds an IMU struct to the queue to send via MQTT
- * @param[out]
-
- * @return		Returns pdTrue if data can be added to queue, pdFalse if queue is full
- * @note
-
-*/
-int WifiAddImuDataToQueue(struct ImuDataPacket *imuPacket)
-{
-    int error = xQueueSend(xQueueImuBuffer, imuPacket, (TickType_t)10);
-    return error;
-}
 
 /**
- void WifiAddImuDataToQueue(struct ImuDataPacket* imuPacket)
- * @brief	Adds an Distance data to the queue to send via MQTT
- * @param[out]
-
- * @return		Returns pdTrue if data can be added to queue, pdFalse if queue is full
- * @note
-
-*/
-int WifiAddDistanceDataToQueue(uint16_t *distance)
-{
-    int error = xQueueSend(xQueueDistanceBuffer, distance, (TickType_t)10);
-    return error;
-}
-
-/**
- void WifiAddGameToQueue(struct ImuDataPacket* imuPacket)
- * @brief	Adds an game to the queue to send via MQTT. Game data must have 0xFF IN BYTES THAT WILL NOT BE SENT!
- * @param[out]
-
- * @return		Returns pdTrue if data can be added to queue, pdFalse if queue is full
- * @note
-
-*/
-int WifiAddGameDataToQueue(struct GameDataPacket *game)
-{
-    int error = xQueueSend(xQueueGameBuffer, game, (TickType_t)10);
-    return error;
-}
-
-/**
- void WifiAddTimeToQueue(struct TimeInfo* imuPacket)
- * @brief	Adds an game to the queue to send via MQTT. Game data must have 0xFF IN BYTES THAT WILL NOT BE SENT!
- * @param[out]
-
- * @return		Returns pdTrue if data can be added to queue, pdFalse if queue is full
- * @note
-
+ int WifiAddTimeToQueue(struct TimeInfo *time)
+ * @brief	Add time to the queue
+ * @param	time: time to add
+ * @return
+ *
 */
 int WifiAddTimeToQueue(struct TimeInfo *time)
 {
@@ -1360,13 +1216,11 @@ int WifiAddTimeToQueue(struct TimeInfo *time)
 }
 
 /**
- void WifiAddTimeToQueue(struct TimeInfo* imuPacket)
- * @brief	Adds an game to the queue to send via MQTT. Game data must have 0xFF IN BYTES THAT WILL NOT BE SENT!
- * @param[out]
-
- * @return		Returns pdTrue if data can be added to queue, pdFalse if queue is full
- * @note
-
+ int WifiAddSensorDataToQueue(struct SensorDataPacket *sensorPacket)
+ * @brief	Add sensor data to the queue
+ * @param	sensorPacket: sensor data to add
+ * @return
+ *
 */
 int wifiAddSensorDataToQueue(struct SensorDataPacket *sensorPacket)
 {

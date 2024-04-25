@@ -53,10 +53,6 @@
 /******************************************************************************
  * Global Function Declaration
  ******************************************************************************/
-//int SHTC3_Init(void);
-//int SHTC3_SendI2cCommand(uint8_t *buf, uint8_t size);
-//int SHTC3_Read_Data(uint8_t *buf, uint8_t size);
-//int SHTC3_Init(uint8_t *buffer, uint8_t count);
 int SHTC3_Init(void);
 int32_t SHTC3_Read_Data(uint8_t *buffer, uint8_t count);
 

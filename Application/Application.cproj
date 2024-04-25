@@ -1258,7 +1258,6 @@
     <Folder Include="src\ClockTask\" />
     <Folder Include="src\config\" />
     <Folder Include="src\IMU\" />
-    <Folder Include="src\IMU\" />
     <Folder Include="src\iot\" />
     <Folder Include="src\iot\http\" />
     <Folder Include="src\CliThread" />
@@ -1399,12 +1398,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\I2cDriver\I2cDriver.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\IMU\lsm6dso_reg.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\IMU\lsm6dso_reg.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\secret.h">

@@ -22,11 +22,6 @@
 #define PWM_CLOSE_frequncy 0x17700
 #define PWM_STOP_frequncy 0x117D9
 
-// #define EXT1_PWM_MODULE           TCC0
-// #define EXT1_PWM_0_CHANNEL        2
-// #define EXT1_PWM_0_PIN            PIN_PA10F_TCC0_WO2
-// #define EXT1_PWM_0_MUX            MUX_PA10F_TCC0_WO2
-
 
 void pwm_func_confg(void);
 void start_pwm(int forward);
