@@ -491,6 +491,7 @@ void LCD_menu(void)
 {
 	LCD_clearScreen(MYCOLOR);
 	drawString(10,20,"Magic Curtain Opener Pro",WHITE, MYCOLOR);
+
 	
 	drawString(20, 70, "Temperature: ", WHITE, MYCOLOR);
 	drawString(20, 80, "Humidity: ", WHITE, MYCOLOR);
@@ -517,20 +518,17 @@ void LCD_menu(void)
  * @return	None
  * 
 */
-void LCD_Sensor(int temp, int hum, int voc, int adc)
+void LCD_Sensor(int temp, int hum, int voc, int adc, int hour, int minute)
 {
 	//LCD_menu();
 	char buffer[20];
 	memset(buffer, 0, sizeof(buffer));
-	
-	
-	
-	
 
+	drawRectangle(60, 40, 90, 49, MYCOLOR);
 	drawRectangle(95, 70, 120, 79, MYCOLOR);
 	drawRectangle(75, 80, 105, 89, MYCOLOR);
 	drawRectangle(45, 90, 60, 99, MYCOLOR);
-	drawRectangle(55, 100, 70, 110, MYCOLOR);
+	drawRectangle(55, 100, 80, 110, MYCOLOR);
 	//snprintf(buffer, sizeof(buffer), "Temperature: %d C", temp);
 	//drawString(20, 70, buffer, WHITE, MYCOLOR);
 //
@@ -543,6 +541,9 @@ void LCD_Sensor(int temp, int hum, int voc, int adc)
 	//snprintf(buffer, sizeof(buffer), "ADC: %d", adc);
 	//// drawRectangle(20, 100, , , unsigned char c)
 	//drawString(20, 100, buffer, WHITE, MYCOLOR);
+
+	snprintf(buffer, sizeof(buffer), "%d: %d", hour, minute);
+	drawString(60, 40, buffer, WHITE, MYCOLOR);
 	
 	snprintf(buffer, sizeof(buffer), "%d C", temp);
 	drawString(95, 70, buffer, WHITE, MYCOLOR);
@@ -553,7 +554,7 @@ void LCD_Sensor(int temp, int hum, int voc, int adc)
 	snprintf(buffer, sizeof(buffer), " %d", voc);
 	drawString(45, 90, buffer, WHITE, MYCOLOR);
 
-	snprintf(buffer, sizeof(buffer), " %d", adc);
+	snprintf(buffer, sizeof(buffer), " %d %%", adc);
 	// drawRectangle(20, 100, , , unsigned char c)
 	drawString(55, 100, buffer, WHITE, MYCOLOR);
 }

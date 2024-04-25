@@ -12,8 +12,6 @@
 #include "Sensors_Task/sensorTask.h"
 #include "TFTdriver/tft.h"
 
-#include "WifiHandlerThread/WifiHandler.h"
-
 TickType_t ticknum = 0;
 struct TimeInfo currentTime;
 struct TimeInfo newTime;
@@ -27,7 +25,7 @@ struct TimeInfo newTime;
  * @param       tick: TimeInfo struct to store the time the system was set to
  * 
 */
-static void getTimeSinceBoot(struct TimeInfo *time, struct TimeInfo *tick) {
+void getTimeSinceBoot(struct TimeInfo *time, struct TimeInfo *tick) {
     TickType_t ticks = xTaskGetTickCount() - ticknum; // Get the current tick count
 
     // Calculate time components
@@ -45,6 +43,7 @@ static void getTimeSinceBoot(struct TimeInfo *time, struct TimeInfo *tick) {
 */
 void clockTask(void *pvParameters) {
     
+    bool firstRun = true;
     struct SensorDataPacket sensorData;
     uint8_t buffer[64];
 
@@ -59,41 +58,54 @@ void clockTask(void *pvParameters) {
     currentTime.type = TIME_INFO_SEND;
     
     getTimeSinceBoot(&currentTime, &newTime);
-    //WifiAddTimeToQueue(&currentTime);
 
-    uint32_t currentMinute = currentTime.seconds;
+    uint32_t currentMinute = currentTime.minutes;
 
     SerialConsoleWriteString("Start clock task\r\n");
 
     while (1)
     {
-        //snprintf(buffer, 63, "{\"hour\":%d, \"min\": %d, \"sec\": %d}", currentTime.hours, currentTime.minutes, currentTime.seconds);
-        //SerialConsoleWriteString(buffer);
-
         //volatile UBaseType_t uxHighWaterMark;
 	    //uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
 
         getTimeSinceBoot(&currentTime, &newTime);
-        
 
-         // update time info every 1 minute
-         if(currentTime.seconds - currentMinute >= 10){
+        // print all default messages when power is on for 5s.
+        if(firstRun && currentTime.seconds == 5){
             WifiAddTimeToQueue(&currentTime);
-            //SerialConsoleWriteString("send time\r\n");
-            currentMinute = currentTime.seconds;
 
             sensorData.light_intensity = getLightIntensity();
             getTemperatureHumidityVOC(&sensorData.temperature, &sensorData.humidity, &sensorData.VOCvalue);
             wifiAddSensorDataToQueue(&sensorData);
-			LCD_Sensor(sensorData.temperature, sensorData.humidity, sensorData.VOCvalue,  sensorData.light_intensity);
+            LCD_Sensor(sensorData.temperature, sensorData.humidity, sensorData.VOCvalue, 
+                        sensorData.light_intensity, currentTime.hours, currentTime.minutes);
+            firstRun = false;
+        }
+        
+
+         // update time info every 1 minute
+         if(currentTime.minutes - currentMinute >= 10){
+            // send current time to web
+            WifiAddTimeToQueue(&currentTime);
+            
+            currentMinute = currentTime.minutes;
+
+            // send sensor data to web
+            sensorData.light_intensity = getLightIntensity();
+            getTemperatureHumidityVOC(&sensorData.temperature, &sensorData.humidity, &sensorData.VOCvalue);
+            wifiAddSensorDataToQueue(&sensorData);
+
+            // display on LCD screen
+			LCD_Sensor(sensorData.temperature, sensorData.humidity, sensorData.VOCvalue, 
+                        sensorData.light_intensity, currentTime.hours, currentTime.minutes);
          }
 
         // if user adjust time
         if (pdPASS == xQueueReceive(xQueueTimeAdjInfo, &newTime, 0)) {
             if(newTime.type == TIME_INFO_ADJUST) {
                 SerialConsoleWriteString("\r\n adjust time...\r\n");
-				snprintf(buffer, 63, "{\"hour\":%d, \"min\": %d, \"sec\": %d}", newTime.hours, newTime.minutes, newTime.seconds);
-				SerialConsoleWriteString(buffer);
+				//snprintf(buffer, 63, "{\"hour\":%d, \"min\": %d, \"sec\": %d}", newTime.hours, newTime.minutes, newTime.seconds);
+				//SerialConsoleWriteString(buffer);
                 ticknum = xTaskGetTickCount();
                 getTimeSinceBoot(&currentTime, &newTime);
                 WifiAddTimeToQueue(&currentTime);

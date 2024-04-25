@@ -206,7 +206,7 @@ void LCD_clearScreen(unsigned short); // set the color of every pixel
 void configure_port_pins_LCD(void);
 //void dingzhen(void);
 void LCD_menu(void);
-void LCD_Sensor(int temp, int hum, int voc, int adc);
+void LCD_Sensor(int temp, int hum, int voc, int adc, int hour, int minutes);
 
 
 

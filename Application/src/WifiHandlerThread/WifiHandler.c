@@ -734,8 +734,11 @@ void SubscribeHandlerClockTopic(MessageData *msgData)
 		
         //send data to queue
         struct TimeInfo adjustTIme;
-		uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+		//uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
 		//LogMessage(LOG_DEBUG_LVL, "\r\n %d / 1000 = %d", receivedTime, convertedTime);
+		char *payloadStr = (char *)msgData->message->payload;
+		payloadStr[msgData->message->payloadlen] = '\0'; // Ensure null-termination
+		uint32_t receivedTime = atoi(payloadStr) / 1000; // Convert string to integer and adjust scale
 
         adjustTIme.type = TIME_INFO_ADJUST;
 		adjustTIme.milliseconds = 0;
@@ -802,7 +805,12 @@ void SubscribeHandlerOpenTopic(MessageData *msgData) {
 		    
 		//send data to queue
 		struct TimeInfo OpenTime;
-		uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+		//uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+        //LogMessage(LOG_DEBUG_LVL, "\r\n receivedTime: %d\r\n", receivedTime);
+		// Convert payload to integer and then to time structure
+		char *payloadStr = (char *)msgData->message->payload;
+		payloadStr[msgData->message->payloadlen] = '\0'; // Ensure null-termination
+		uint32_t receivedTime = atoi(payloadStr) / 1000; // Convert string to integer and adjust scale
 
 		OpenTime.type = TIME_INFO_SET_OPEN;
 		OpenTime.milliseconds = 0;
@@ -810,6 +818,7 @@ void SubscribeHandlerOpenTopic(MessageData *msgData) {
 		OpenTime.minutes = (receivedTime / 60) % 60;
 		OpenTime.hours = (receivedTime / 3600) % 24;
 		xQueueSend(xQueueSetTime, &OpenTime, (TickType_t)10);
+		
 	}
 }
 
@@ -826,7 +835,10 @@ void SubscribeHandlerCloseTopic(MessageData *msgData) {
 			
 		//send data to queue
 		struct TimeInfo CloseTime;
-		uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+		//uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+		char *payloadStr = (char *)msgData->message->payload;
+		payloadStr[msgData->message->payloadlen] = '\0'; // Ensure null-termination
+		uint32_t receivedTime = atoi(payloadStr) / 1000; // Convert string to integer and adjust scale
 
 		CloseTime.type = TIME_INFO_SET_CLOSE;
 		CloseTime.milliseconds = 0;

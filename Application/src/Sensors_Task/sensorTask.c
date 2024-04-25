@@ -116,7 +116,7 @@ void sensorTask(void *pvParameters)
 			 	//break;
 			 //}
 			case(TIMER): {
-				//timer_open(&openTime, &closeTime);
+				timer_open(&openTime, &closeTime);
 				break;
 			}
 		}
@@ -195,10 +195,16 @@ static void timer_open(struct TimeInfo *open, struct TimeInfo *close){
 		if(receivedTime.type == TIME_INFO_SET_OPEN){
 			open->minutes = receivedTime.minutes;
 			open->hours = receivedTime.hours;
+			SerialConsoleWriteString("open receive\r\n");
+			if(curtainClosed) SerialConsoleWriteString("curtainClosed\r\n");
+			else SerialConsoleWriteString("curtainNotClosed\r\n");
 		}
 		else if(receivedTime.type == TIME_INFO_SET_CLOSE){
 			close->minutes = receivedTime.minutes;
 			close->hours = receivedTime.hours;
+			SerialConsoleWriteString("close receive\r\n");
+			if(curtainClosed) SerialConsoleWriteString("curtainClosed\r\n");
+			else SerialConsoleWriteString("curtainNotClosed\r\n");
 		}
 	}
 	getTime(&receivedTime);
@@ -208,7 +214,7 @@ static void timer_open(struct TimeInfo *open, struct TimeInfo *close){
 		open->minutes = 0;
 	}
 	else if (receivedTime.hours == close->hours && receivedTime.minutes == close->minutes && !curtainClosed){
-		open_curtain();
+		close_curtain();
 		close->hours = 0;
 		close->minutes = 0;
 	}
