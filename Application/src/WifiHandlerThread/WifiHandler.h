@@ -98,6 +98,7 @@ typedef enum {
     TIME_INFO_SET_CLOSE // receive curtain close time from web
 } TimeType;
 
+
 struct TimeInfo {
     TimeType type;
     uint32_t hours;
@@ -105,6 +106,19 @@ struct TimeInfo {
     uint32_t seconds;
     uint32_t milliseconds;
 };
+
+struct SensorDataPacket{
+    uint16_t light_intensity;
+    uint16_t temperature;
+    uint16_t humidity;
+    uint16_t VOCvalue;
+};
+
+typedef enum {
+    SMART,  // smart decision based on photoresistor
+    MANUAL, // manual decision based on user input
+    TIMER // timer decision based on time set by user
+} ModeType;
 
 /* Max size of UART buffer. */
 #define MAIN_CHAT_BUFFER_SIZE 64
@@ -125,10 +139,11 @@ struct TimeInfo {
 #define IMU_TOPIC "P1_IMU_ESE516_T0"                  // Students to change to an unique identifier for each device! IMU Data
 #define DISTANCE_TOPIC "P1_DISTANCE_ESE516_T0"        // Students to change to an unique identifier for each device! Distance Data
 #define TEMPERATURE_TOPIC "P1_TEMPERATURE_ESE516_T0"  // Students to change to an unique identifier for each device! Distance Data
-#define SENSOR_TOPIC "sensor"
+#define SENSOR_TOPIC "Sensor"
 #define Button_TOPIC "button"
 #define TIME_TOPIC "Time"
 #define TIME_ADJUST_TOPIC "Adjusted_Time"
+
 
 #else
 /* Chat MQTT topic. */
@@ -174,17 +189,22 @@ static const char main_mqtt_broker[] = "74.249.109.202";
 /******************************************************************************
  * Global Function Declaration
  ******************************************************************************/
+
 void vWifiTask(void *pvParameters);
 void init_storage(void);
+
 void WifiHandlerSetState(uint8_t state);
 int WifiAddDistanceDataToQueue(uint16_t *distance);
 int WifiAddImuDataToQueue(struct ImuDataPacket *imuPacket);
 int WifiAddGameDataToQueue(struct GameDataPacket *game);
 int WifiAddTimeToQueue(struct TimeInfo *time);
+int wifiAddSensorDataToQueue(struct SensorDataPacket *sensorPacket);
+
 void SubscribeHandlerLedTopic(MessageData *msgData);
 void SubscribeHandlerGameTopic(MessageData *msgData);
 void SubscribeHandlerImuTopic(MessageData *msgData);
 void SubscribeHandlerDistanceTopic(MessageData *msgData);
+
 void configure_extint_channel(void);
 void configure_extint_callbacks(void);
 bool button_status(void);

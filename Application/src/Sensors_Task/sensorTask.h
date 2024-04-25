@@ -20,6 +20,8 @@ void sensorTask(void *pvParameters);
 void configure_button(void);
 void configure_button_callbacks(void);
 void button_detection_callback(void);
+int getLightIntensity(void);
+void getTemperatureHumidityVOC(uint16_t *temperature, uint16_t *humidity, uint16_t *VOC);
 
 
 

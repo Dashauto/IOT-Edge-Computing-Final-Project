@@ -9,6 +9,7 @@
 #include "task.h"
 #include "Global.h"
 #include "SerialConsole.h"
+#include "Sensors_Task/sensorTask.h"
 
 #include "WifiHandlerThread/WifiHandler.h"
 
@@ -43,9 +44,11 @@ void clockTask(void *pvParameters) {
 
     struct TimeInfo currentTime;
     struct TimeInfo newTime;
+    struct SensorDataPacket sensorData;
     uint8_t buffer[64];
 
     xQueueTimeAdjInfo = xQueueCreate(5, sizeof(struct TimeInfo));
+
 
     newTime.hours = 0;
     newTime.minutes = 0;
@@ -55,7 +58,9 @@ void clockTask(void *pvParameters) {
     currentTime.type = TIME_INFO_SEND;
     
     getTimeSinceBoot(&currentTime, &newTime);
-    uint32_t currentMinute = currentTime.minutes;
+    //WifiAddTimeToQueue(&currentTime);
+
+    uint32_t currentMinute = currentTime.seconds;
 
     SerialConsoleWriteString("Start clock task\r\n");
 
@@ -67,14 +72,18 @@ void clockTask(void *pvParameters) {
         //volatile UBaseType_t uxHighWaterMark;
 	    //uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
 
-         getTimeSinceBoot(&currentTime, &newTime);
+        getTimeSinceBoot(&currentTime, &newTime);
         
 
          // update time info every 1 minute
-         if(currentTime.minutes - currentMinute >= 1){
+         if(currentTime.seconds - currentMinute >= 10){
             WifiAddTimeToQueue(&currentTime);
             //SerialConsoleWriteString("send time\r\n");
-            currentMinute = currentTime.minutes;
+            currentMinute = currentTime.seconds;
+
+            sensorData.light_intensity = getLightIntensity();
+            getTemperatureHumidityVOC(&sensorData.temperature, &sensorData.humidity, &sensorData.VOCvalue);
+            wifiAddSensorDataToQueue(&sensorData);
          }
 
         // if user adjust time

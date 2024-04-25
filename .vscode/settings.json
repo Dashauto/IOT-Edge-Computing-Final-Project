@@ -3,6 +3,7 @@
         "string.h": "c",
         "i2cdriver.h": "c",
         "voccal.h": "c",
-        "stdio_serial.h": "c"
+        "stdio_serial.h": "c",
+        "queue.h": "c"
     }
 }

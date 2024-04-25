@@ -11,7 +11,7 @@
 #include <asf.h>
 
 
-#define Clock_TASK_SIZE 200
+#define Clock_TASK_SIZE 300
 #define ClockTask_PRIORITY		( configMAX_PRIORITIES - 5 )
 
 

@@ -6,11 +6,11 @@
 
 2. wifi - send to queue operating state machine  - receive from queue senor readings
 
-3. sensor  - send to queue sensor readings  -  receive from queue operating state machine
+3. sensor  - send to queue sensor readings `xQueueSensorBuffer`  -  receive from queue operating state machine
 
    - receive from queue current time
 
-4. clock  -  send to queue time  -  receive from queue adjusted time
+4. clock  -  send to queue time `xQueueTimeInfo`  -  receive from queue adjusted time `xQueueTimeAdjInfo`
 
 - priority: cli > clock > sensor = wifi
 
@@ -32,7 +32,13 @@ Wifi send & receive procedure:
 
 1. 在头文件中定义要传的struct
 
-2. 声明[QueueHandle_t xQueueXXXInfo = NULL;] 以及 [xQueueXXXInfo = xQueueCreate(5, sizeof(struct TimeXXX));] 跨Task传参handler
+2. 声明[QueueHandle_t xQueueXXXInfo = NULL;] 以及 [xQueueXXXInfo = xQueueCreate(5, sizeof(struct XXX));] 跨Task传参handler
+
+   1. 如果需要实现数据双向传输，即既能接收数据又能发送数据，遵循以下步骤
+
+      1. 再声明一个[QueueHandle_t xQueueYYYInfo = NULL;]作为接收端 
+
+      2. 将 [xQueueYYYInfo = xQueueCreate(5, sizeof(struct YYY));] 同时放置于 vWifiTask 与 信息传递终点的Task 记得添加头文件
 
 3. 添加[int WifiAddXXXToQueue(struct TimeSinceBoot *time)]函数作为跨Task传参函数
 
@@ -43,6 +49,38 @@ Wifi send & receive procedure:
 6. 在头文件中定义 MQTT topic [#define XXX_TOPIC "xxx"]
 
 7. 定义 [void SubscribeHandlerXXXTopic(MessageData *msgData)]函数
+
+
+Logic:
+
+在.h中创建 struct OperationMode
+
+
+ModeType mode
+
+mode = SMART;
+
+while(1) {
+
+   switch(mode){
+      case(SMART):{smart_open();   break;}
+      case(MANUAL): {manual_open();   break;}
+      case(TIMER): {timer_open();   break;}
+   }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## 0424 update

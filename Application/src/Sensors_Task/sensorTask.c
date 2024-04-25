@@ -68,13 +68,11 @@ void sensorTask(void *pvParameters)
 	//configure_button_callbacks();
 	adc_func_config();
 	
-	 //LCD initialize
-	 configure_port_pins_LCD();
-	 LCD_init();
-	 LCD_menu();
+	//LCD initialize
+	configure_port_pins_LCD();
+	LCD_init();
+	LCD_menu();
 	
-	
-
 	uint8_t buffer[64];
 	uint8_t buffer1[64];
 	uint16_t buffer2[128];
@@ -128,10 +126,10 @@ void sensorTask(void *pvParameters)
 
 			// value ranges from 450 - 3000
 			uint16_t adc_res = adc_read_raw();
-			 if(adc_res != -1){
-			 	snprintf((char *) buffer1, sizeof(buffer1), "ADC Value : %d\r\n", adc_res);
-			 	SerialConsoleWriteString(buffer1);
-			 }
+			if(adc_res != -1) {
+				snprintf((char *) buffer1, sizeof(buffer1), "ADC Value : %d\r\n", adc_res);
+				SerialConsoleWriteString(buffer1);
+			}
 
 			LCD_Sensor(temperature, humidity, voc_index, adc_res);
 
@@ -147,3 +145,39 @@ void sensorTask(void *pvParameters)
 }
 
 
+int getLightIntensity(void) {
+	// read adc value
+	uint16_t adc_res = adc_read_raw();
+
+	// value ranges from 450 - 3000
+	if (adc_res > 3000) return 100;
+	if (adc_res < 450) return 0;
+
+	// convert 450-3000 to 0-100
+	uint16_t light_value = (adc_res - 450) * 100 / (3000 - 450);
+	return light_value;
+}
+
+void getTemperatureHumidityVOC(uint16_t *temperature, uint16_t *humidity, uint16_t *VOC) {
+    uint8_t buffer[64];
+    uint8_t res = SHTC3_Read_Data(buffer, 2);  // Make sure to handle the result of this function to ensure data was read correctly
+
+    if (res == 0) {
+        // Calculate temperature
+        *temperature = (((buffer[0] << 8) | buffer[1]) * 175 / 65536) - 45;
+
+        // Calculate humidity
+        *humidity = ((buffer[2] << 8) | buffer[3]) * 100 / 65536;
+
+        res = SGP40_Read_Default_Data(buffer, 2);
+        uint16_t voc_raw = (buffer[0] << 8) | buffer[1];
+
+        int vocIndex; // Additional variable for VOC index
+        VocAlgorithm_process2(voc_raw, &vocIndex);
+        *VOC = (uint16_t) vocIndex;  // Assuming you still want to use the original VOC pointer for some reason
+
+    } else {
+        // Handle error conditions
+        SerialConsoleWriteString("Error reading sensors\r\n");
+    }
+}

@@ -31,8 +31,10 @@ QueueHandle_t xQueueGameBuffer = NULL;      ///< Queue to send the next play to 
 QueueHandle_t xQueueImuBuffer = NULL;       ///< Queue to send IMU data to the cloud
 QueueHandle_t xQueueDistanceBuffer = NULL;  ///< Queue to send the distance to the cloud
 
-QueueHandle_t xQueueTimeInfo = NULL;
-QueueHandle_t xQueueTimeAdjInfo = NULL;
+QueueHandle_t xQueueTimeInfo = NULL;        ///< Queue to send the time to the cloud
+QueueHandle_t xQueueTimeAdjInfo = NULL;     ///< Queue to receive the time from the cloud
+
+QueueHandle_t xQueueSensorBuffer = NULL;     ///< Queue to send sensor data to the cloud
 
 /*HTTP DOWNLOAD RELATED DEFINES AND VARIABLES*/
 
@@ -78,9 +80,12 @@ static unsigned char mqtt_send_buffer[MAIN_MQTT_BUFFER_SIZE];
  * Forward Declarations
  ******************************************************************************/
 static void MQTT_InitRoutine(void);
+
 static void MQTT_HandleGameMessages(void);
 static void MQTT_HandleImuMessages(void);
 static void MQTT_HandleTimeMessages(void);
+static void MQTT_HandleSensorMessages(void);
+
 static void HTTP_DownloadFileInit(void);
 static void HTTP_DownloadFileTransaction(void);
 /******************************************************************************
@@ -730,7 +735,7 @@ void SubscribeHandlerClockTopic(MessageData *msgData)
 		//char *end;
 		//uint32_t receivedTime = strtoul((char *)msgData->message->payload, &end, 10);
 		//if (*end != '\0') {
-			//// ´¦Àí´íÎó: ×Ö·û´®ÖÐ°üº¬·ÇÊý×Ö×Ö·û
+			//// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ð°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½
 		//}
         uint32_t convertedTime = receivedTime / 1000;
 		LogMessage(LOG_DEBUG_LVL, "\r\n %d / 1000 = %d", receivedTime, convertedTime);
@@ -985,6 +990,7 @@ static void MQTT_HandleTransactions(void)
     MQTT_HandleGameMessages();
     MQTT_HandleImuMessages();
     MQTT_HandleTimeMessages();
+    MQTT_HandleSensorMessages();
 
     // Handle MQTT messages
     if (mqtt_inst.isConnected) mqtt_yield(&mqtt_inst, 100);
@@ -995,7 +1001,7 @@ static void MQTT_HandleImuMessages(void)
     struct ImuDataPacket imuDataVar;
     if (pdPASS == xQueueReceive(xQueueImuBuffer, &imuDataVar, 0)) {
         snprintf(mqtt_msg, 63, "{\"imux\":%d, \"imuy\": %d, \"imuz\": %d}", imuDataVar.xmg, imuDataVar.ymg, imuDataVar.zmg);
-        mqtt_publish(&mqtt_inst, IMU_TOPIC, mqtt_msg, strlen(mqtt_msg), 1, 0);
+        mqtt_publish(&mqtt_inst, SENSOR_TOPIC, mqtt_msg, strlen(mqtt_msg), 1, 0);
     }
 }
 
@@ -1037,6 +1043,17 @@ static void MQTT_HandleTimeMessages(void)
     }
 }
 
+static void MQTT_HandleSensorMessages(void)
+{
+    struct SensorDataPacket sensorDataVar;
+    if (pdPASS == xQueueReceive(xQueueSensorBuffer, &sensorDataVar, 0)) {
+        snprintf(mqtt_msg, 63, "{\"light\":%d, \"temp\": %d, \"humidity\": %d, \"voc\": %d}", sensorDataVar.light_intensity, sensorDataVar.temperature, sensorDataVar.humidity, sensorDataVar.VOCvalue);
+        LogMessage(LOG_DEBUG_LVL, mqtt_msg);
+		LogMessage(LOG_DEBUG_LVL, "\r\n");
+        mqtt_publish(&mqtt_inst, SENSOR_TOPIC, mqtt_msg, strlen(mqtt_msg), 1, 0);
+    } 
+}
+
 
 /**
  * \brief Main application function.
@@ -1059,6 +1076,7 @@ void vWifiTask(void *pvParameters)
 
     xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeInfo));
 	xQueueTimeAdjInfo = xQueueCreate(5, sizeof(struct TimeInfo));
+    xQueueSensorBuffer = xQueueCreate(5, sizeof(struct TimeInfo));
 
     if (xQueueWifiState == NULL || xQueueImuBuffer == NULL || xQueueGameBuffer == NULL || xQueueDistanceBuffer == NULL) {
         SerialConsoleWriteString("ERROR Initializing Wifi Data queues!\r\n");
@@ -1235,3 +1253,19 @@ int WifiAddTimeToQueue(struct TimeInfo *time)
     int error = xQueueSend(xQueueTimeInfo, time, (TickType_t)10);
     return error;
 }
+
+/**
+ void WifiAddTimeToQueue(struct TimeInfo* imuPacket)
+ * @brief	Adds an game to the queue to send via MQTT. Game data must have 0xFF IN BYTES THAT WILL NOT BE SENT!
+ * @param[out]
+
+ * @return		Returns pdTrue if data can be added to queue, pdFalse if queue is full
+ * @note
+
+*/
+int wifiAddSensorDataToQueue(struct SensorDataPacket *sensorPacket)
+{
+    int error = xQueueSend(xQueueSensorBuffer, sensorPacket, (TickType_t)10);
+    return error;
+}
+
