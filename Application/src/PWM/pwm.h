@@ -16,9 +16,11 @@
 
 // f = 48Mhz / (2 * prescaler * (1 + PER))
 // prescaler = 1, PER = 0xA1A3, f = 580Hz
-// prescaler = 1, PER = 0x7FFF, f = 732Hz
+// prescaler = 1, PER = 0x17700, f = 250Hz
+// prescaler = 1, PER = 0x117D9, f = 335Hz
 #define PWM_OPEN_frequncy 0xA1A3
-#define PWM_CLOSE_frequncy 0x7FFF
+#define PWM_CLOSE_frequncy 0x17700
+#define PWM_STOP_frequncy 0x117D9
 
 // #define EXT1_PWM_MODULE           TCC0
 // #define EXT1_PWM_0_CHANNEL        2
@@ -27,7 +29,7 @@
 
 
 void pwm_func_confg(void);
-void start_pwm(void);
+void start_pwm(int forward);
 void stop_pwm(void);
 
 

@@ -1076,7 +1076,7 @@ void vWifiTask(void *pvParameters)
 
     xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeInfo));
 	xQueueTimeAdjInfo = xQueueCreate(5, sizeof(struct TimeInfo));
-    xQueueSensorBuffer = xQueueCreate(5, sizeof(struct TimeInfo));
+    xQueueSensorBuffer = xQueueCreate(5, sizeof(struct SensorDataPacket));
 
     if (xQueueWifiState == NULL || xQueueImuBuffer == NULL || xQueueGameBuffer == NULL || xQueueDistanceBuffer == NULL) {
         SerialConsoleWriteString("ERROR Initializing Wifi Data queues!\r\n");

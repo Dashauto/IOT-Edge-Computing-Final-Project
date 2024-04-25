@@ -21,6 +21,13 @@
 #include "PWM/pwm.h"
 
 volatile bool buttonPressed = false;
+volatile bool curtainClosed = true;
+
+
+static void smart_open(void);
+static void manual_open(void);
+static void timer_open(void);
+
 
 // SETUP FOR EXTERNAL BUTTON INTERRUPT -- Used to send an MQTT Message
 
@@ -92,58 +99,71 @@ void sensorTask(void *pvParameters)
 	int32_t voc_raw = 0;
 	int32_t voc_index = 0;
 	
-		
+	ModeType mode = SMART;
+	
 	while(1)
 	{    
-		buttonPressed = button_status();
-		if(buttonPressed) {
-			// Buzzer PB03
-			// port_pin_set_output_level(PIN_PB03, true);
-
-			buttonPressed = false;
-			res = SHTC3_Read_Data(buffer, 2);
-			/**
-			 * formulas for conversion of the sensor signals, optimized for fixed point
-			 * algebra:
-			 * Temperature = 175 * S_T / 2^16 - 45
-			 * Relative Humidity = 100 * S_RH / 2^16
-			 */
-			temperature = (((buffer[0] << 8 | buffer[1]) * 175) / 65536 ) - 45;
-			humidity = ((buffer[0] << 8) | buffer[1]) * 100 / 65536;
-			snprintf((char *) buffer1, sizeof(buffer1), "Temp : %d Humi: %d\r\n",temperature, humidity);
-			SerialConsoleWriteString(buffer1);
-
-			vTaskDelay(1);
-
-			res = SGP40_Read_Default_Data(buffer, 2);
-			voc_raw = (buffer[0] << 8) | buffer[1];
-			snprintf((char *) buffer1, sizeof(buffer1), "voc_raw : %d\r\n",voc_raw);
-			SerialConsoleWriteString(buffer1);
-
-			VocAlgorithm_process2(voc_raw, &voc_index);
-			snprintf((char *) buffer1, sizeof(buffer1), "VOC Index : %d\r\n",voc_index);
-			SerialConsoleWriteString(buffer1);
-
-			// value ranges from 450 - 3000
-			uint16_t adc_res = adc_read_raw();
-			if(adc_res != -1) {
-				snprintf((char *) buffer1, sizeof(buffer1), "ADC Value : %d\r\n", adc_res);
-				SerialConsoleWriteString(buffer1);
+		switch(mode){
+			
+			case(SMART): {
+				smart_open();
+				break;
 			}
-
-			LCD_Sensor(temperature, humidity, voc_index, adc_res);
-
-			//start_pwm();
-
-			vTaskDelay(1000);
-			//stop_pwm();
-			// Buzzer PB03
-			//port_pin_set_output_level(PIN_PB03, false);
+			case(MANUAL): {
+				manual_open();
+				break;
+			}
+			case(TIMER): {
+				timer_open();
+				break;
+			}
+			default:
+                mode = SMART;
+                break;
 		}
-		vTaskDelay(10);
+
+		//LCD_Sensor(temperature, humidity, voc_index, adc_res);
+
+		//start_pwm();
+
+		//vTaskDelay(1000);
+		//stop_pwm();
+		// Buzzer PB03
+		//port_pin_set_output_level(PIN_PB03, false);
+		vTaskDelay(1000);
 	}
 }
 
+
+
+
+static void smart_open(void) {
+
+	uint16_t light_res = getLightIntensity();
+	if (light_res > 90 && curtainClosed)
+	{
+		start_pwm(1);
+		port_pin_set_output_level(PIN_PB03, true);
+		vTaskDelay(1000);
+		port_pin_set_output_level(PIN_PB03, false);
+		stop_pwm();
+		// make sure the curtain is closed only once
+		curtainClosed = false;
+	}
+	else if (light_res < 30 && !curtainClosed)
+	{
+		start_pwm(0);
+		port_pin_set_output_level(PIN_PB03, true);
+		vTaskDelay(1000);
+		port_pin_set_output_level(PIN_PB03, false);
+		stop_pwm();
+		// make sure the curtain is opened only once
+		curtainClosed = true;
+	}
+}
+
+static void manual_open(void){}
+static void timer_open(void){}
 
 int getLightIntensity(void) {
 	// read adc value
@@ -181,3 +201,13 @@ void getTemperatureHumidityVOC(uint16_t *temperature, uint16_t *humidity, uint16
         SerialConsoleWriteString("Error reading sensors\r\n");
     }
 }
+
+
+
+
+
+
+
+
+
+

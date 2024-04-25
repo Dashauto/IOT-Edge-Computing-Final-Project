@@ -13,8 +13,8 @@
 #include <asf.h>
 
 
-#define Sensor_TASK_SIZE 500
-#define SensorTask_PRIORITY		( configMAX_PRIORITIES - 4 )
+#define Sensor_TASK_SIZE 700
+#define SensorTask_PRIORITY		( configMAX_PRIORITIES - 3)
 
 void sensorTask(void *pvParameters);
 void configure_button(void);

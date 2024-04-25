@@ -37,7 +37,7 @@ extern "C" {
 #define WIFI_DOWNLOAD_HANDLE 3  ///< State for Wifi handler to Handle Download Connection
 
 #define WIFI_TASK_SIZE 500
-#define WIFI_PRIORITY (configMAX_PRIORITIES - 3)
+#define WIFI_PRIORITY (configMAX_PRIORITIES - 4)
 
 /** IP address parsing. */
 #define IPV4_BYTE(val, index) ((val >> (index * 8)) & 0xFF)
