@@ -42,13 +42,17 @@ Wifi send & receive procedure:
 
 3. 添加[int WifiAddXXXToQueue(struct TimeSinceBoot *time)]函数作为跨Task传参函数
 
-4. 在 [static void MQTT_HandleTransactions(void)]函数中添加[MQTT_HandleXXXMessages()]函数
+4. 在头文件中定义 MQTT topic [#define XXX_TOPIC "xxx"]
 
-5. 补全[MQTT_HandleXXXMessages()]函数
+5. 在 [static void MQTT_HandleTransactions(void)]函数中添加[MQTT_HandleXXXMessages()]函数
 
-6. 在头文件中定义 MQTT topic [#define XXX_TOPIC "xxx"]
+6. 补全[MQTT_HandleXXXMessages()]函数
 
-7. 定义 [void SubscribeHandlerXXXTopic(MessageData *msgData)]函数
+7. 以上为传送教程，以下为接收教程
+
+8. 定义 [void SubscribeHandlerXXXTopic(MessageData *msgData)]函数
+
+9. 在 [static void mqtt_callback(struct mqtt_module *module_inst, int type, union mqtt_data *data)] 函数下的 [if (data->connected.result == MQTT_CONN_RESULT_ACCEPT)] 判断条件下添加 [mqtt_subscribe(module_inst, XXX_TOPIC, 2, SubscribeHandlerXXXTopic);]
 
 
 
@@ -63,3 +67,5 @@ Wifi send & receive procedure:
    static void manual_open(void){} needs to be finished
 
    static void timer_open(void){} needs to be finished
+
+

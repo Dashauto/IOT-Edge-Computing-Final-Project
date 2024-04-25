@@ -22,7 +22,8 @@ void configure_button_callbacks(void);
 void button_detection_callback(void);
 int getLightIntensity(void);
 void getTemperatureHumidityVOC(uint16_t *temperature, uint16_t *humidity, uint16_t *VOC);
-
+void open_curtain(void);
+void close_curtain(void);
 
 
 #endif /* SENSOR_TASK_H_ */

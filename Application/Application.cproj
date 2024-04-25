@@ -536,7 +536,7 @@
       <ToolNumber>ATML2449020200008425</ToolNumber>
       <ToolName>EDBG MSD</ToolName>
     </com_atmel_avrdbg_tool_edbg>
-    <avrtoolinterfaceclock>2000000</avrtoolinterfaceclock>
+    <avrtoolinterfaceclock>4000000</avrtoolinterfaceclock>
     <com_atmel_avrdbg_tool_atmelice>
       <ToolOptions>
         <InterfaceProperties>
@@ -554,7 +554,7 @@
           <SwdClock>4000000</SwdClock>
         </InterfaceProperties>
         <InterfaceName>SWD</InterfaceName>
-        <JlinkConfigFile>C:\Users\Dashauto\OneDrive\ESE-5160\a11g-board-bringup-t08-magic-curtain\Application\jlink.config</JlinkConfigFile>
+        <JlinkConfigFile>D:\graduateSTU\ESE5160\finalProj\IOT-Edge-Computing-Final-Project\Application\jlink.config</JlinkConfigFile>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.samice</ToolType>
       <ToolNumber>801041484</ToolNumber>

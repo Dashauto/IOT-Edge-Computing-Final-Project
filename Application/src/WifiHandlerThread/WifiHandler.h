@@ -115,10 +115,19 @@ struct SensorDataPacket{
 };
 
 typedef enum {
+	MANUAL, // manual decision based on user input
     SMART,  // smart decision based on photoresistor
-    MANUAL, // manual decision based on user input
-    TIMER // timer decision based on time set by user
+    TIMER, // timer decision based on time set by user
+	DUMMY
 } ModeType;
+
+
+struct ButtonDataPacket {
+	ModeType mode;
+	uint8_t openButton;
+	uint8_t closeButton;
+};
+
 
 /* Max size of UART buffer. */
 #define MAIN_CHAT_BUFFER_SIZE 64
@@ -140,10 +149,11 @@ typedef enum {
 #define DISTANCE_TOPIC "P1_DISTANCE_ESE516_T0"        // Students to change to an unique identifier for each device! Distance Data
 #define TEMPERATURE_TOPIC "P1_TEMPERATURE_ESE516_T0"  // Students to change to an unique identifier for each device! Distance Data
 #define SENSOR_TOPIC "Sensor"
-#define Button_TOPIC "button"
+#define Button_TOPIC "Button"
 #define TIME_TOPIC "Time"
 #define TIME_ADJUST_TOPIC "Adjusted_Time"
-
+#define TIME_TO_OPEN "Open_Time"
+#define TIME_TO_CLOSE "Close_time"
 
 #else
 /* Chat MQTT topic. */

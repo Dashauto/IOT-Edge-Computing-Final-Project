@@ -16,5 +16,7 @@
 
 
 void clockTask(void *pvParameters);
+void getTime(struct TimeInfo *time);
+
 
 #endif /* CLOCK_TASK_H_ */

@@ -232,6 +232,14 @@ void drawChar(short x, short y, unsigned char c, short fg, short bg){
     }
 }
 
+void drawRectangle(short x1, short y1, short x2, short y2, short c){
+	for(int i = x1; i <= x2; i++){
+		for(int j = y1; j <= y2; j++){
+			LCD_drawPixel(i, j, c);
+		}
+	}
+}
+
 
 // SPI uses SERCOM3
 // MUX Configuration K
@@ -484,6 +492,11 @@ void LCD_menu(void)
 	LCD_clearScreen(MYCOLOR);
 	drawString(10,20,"Magic Curtain Opener Pro",WHITE, MYCOLOR);
 	
+	drawString(20, 70, "Temperature: ", WHITE, MYCOLOR);
+	drawString(20, 80, "Humidity: ", WHITE, MYCOLOR);
+	drawString(20, 90, "VOC: ", WHITE, MYCOLOR);
+	drawString(20, 100, "Light: ", WHITE, MYCOLOR);
+	
 	// char buffer[20];
 	// memset(buffer,0,sizeof(buffer));
 	// float temp = getTemperature();
@@ -506,18 +519,41 @@ void LCD_menu(void)
 */
 void LCD_Sensor(int temp, int hum, int voc, int adc)
 {
+	//LCD_menu();
 	char buffer[20];
 	memset(buffer, 0, sizeof(buffer));
+	
+	
+	
+	
 
-	snprintf(buffer, sizeof(buffer), "Temperature: %d C", temp);
-	drawString(20, 70, buffer, WHITE, MYCOLOR);
+	drawRectangle(95, 70, 120, 79, MYCOLOR);
+	drawRectangle(75, 80, 105, 89, MYCOLOR);
+	drawRectangle(45, 90, 60, 99, MYCOLOR);
+	drawRectangle(55, 100, 70, 110, MYCOLOR);
+	//snprintf(buffer, sizeof(buffer), "Temperature: %d C", temp);
+	//drawString(20, 70, buffer, WHITE, MYCOLOR);
+//
+	//snprintf(buffer, sizeof(buffer), "Humidity: %d %%", hum);
+	//drawString(20, 80, buffer, WHITE, MYCOLOR);
+//
+	//snprintf(buffer, sizeof(buffer), "VOC: %d", voc);
+	//drawString(20, 90, buffer, WHITE, MYCOLOR);
+//
+	//snprintf(buffer, sizeof(buffer), "ADC: %d", adc);
+	//// drawRectangle(20, 100, , , unsigned char c)
+	//drawString(20, 100, buffer, WHITE, MYCOLOR);
+	
+	snprintf(buffer, sizeof(buffer), "%d C", temp);
+	drawString(95, 70, buffer, WHITE, MYCOLOR);
 
-	snprintf(buffer, sizeof(buffer), "Humidity: %d %%", hum);
-	drawString(20, 80, buffer, WHITE, MYCOLOR);
+	snprintf(buffer, sizeof(buffer), " %d %%", hum);
+	drawString(75, 80, buffer, WHITE, MYCOLOR);
 
-	snprintf(buffer, sizeof(buffer), "VOC: %d", voc);
-	drawString(20, 90, buffer, WHITE, MYCOLOR);
+	snprintf(buffer, sizeof(buffer), " %d", voc);
+	drawString(45, 90, buffer, WHITE, MYCOLOR);
 
-	snprintf(buffer, sizeof(buffer), "ADC: %d", adc);
-	drawString(20, 100, buffer, WHITE, MYCOLOR);
+	snprintf(buffer, sizeof(buffer), " %d", adc);
+	// drawRectangle(20, 100, , , unsigned char c)
+	drawString(55, 100, buffer, WHITE, MYCOLOR);
 }

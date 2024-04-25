@@ -10,10 +10,13 @@
 #include "Global.h"
 #include "SerialConsole.h"
 #include "Sensors_Task/sensorTask.h"
+#include "TFTdriver/tft.h"
 
 #include "WifiHandlerThread/WifiHandler.h"
 
 TickType_t ticknum = 0;
+struct TimeInfo currentTime;
+struct TimeInfo newTime;
 
 
 /**
@@ -24,7 +27,7 @@ TickType_t ticknum = 0;
  * @param       tick: TimeInfo struct to store the time the system was set to
  * 
 */
-void getTimeSinceBoot(struct TimeInfo *time, struct TimeInfo *tick) {
+static void getTimeSinceBoot(struct TimeInfo *time, struct TimeInfo *tick) {
     TickType_t ticks = xTaskGetTickCount() - ticknum; // Get the current tick count
 
     // Calculate time components
@@ -41,9 +44,7 @@ void getTimeSinceBoot(struct TimeInfo *time, struct TimeInfo *tick) {
  * 
 */
 void clockTask(void *pvParameters) {
-
-    struct TimeInfo currentTime;
-    struct TimeInfo newTime;
+    
     struct SensorDataPacket sensorData;
     uint8_t buffer[64];
 
@@ -84,6 +85,7 @@ void clockTask(void *pvParameters) {
             sensorData.light_intensity = getLightIntensity();
             getTemperatureHumidityVOC(&sensorData.temperature, &sensorData.humidity, &sensorData.VOCvalue);
             wifiAddSensorDataToQueue(&sensorData);
+			LCD_Sensor(sensorData.temperature, sensorData.humidity, sensorData.VOCvalue,  sensorData.light_intensity);
          }
 
         // if user adjust time
@@ -104,4 +106,8 @@ void clockTask(void *pvParameters) {
 
         vTaskDelay(100);
     }
+}
+
+void getTime(struct TimeInfo *time){
+	getTimeSinceBoot(time, &newTime);
 }

@@ -32,9 +32,12 @@ QueueHandle_t xQueueImuBuffer = NULL;       ///< Queue to send IMU data to the c
 QueueHandle_t xQueueDistanceBuffer = NULL;  ///< Queue to send the distance to the cloud
 
 QueueHandle_t xQueueTimeInfo = NULL;        ///< Queue to send the time to the cloud
-QueueHandle_t xQueueTimeAdjInfo = NULL;     ///< Queue to receive the time from the cloud
+QueueHandle_t xQueueTimeAdjInfo = NULL;     ///< Queue to receive adjusted time from the cloud
 
 QueueHandle_t xQueueSensorBuffer = NULL;     ///< Queue to send sensor data to the cloud
+QueueHandle_t xQueueButton = NULL;           ///< Queue to send button press to the cloud
+
+QueueHandle_t xQueueSetTime = NULL;		///< Queue to receive time to open/close curtain from the cloud
 
 /*HTTP DOWNLOAD RELATED DEFINES AND VARIABLES*/
 
@@ -731,23 +734,107 @@ void SubscribeHandlerClockTopic(MessageData *msgData)
 		
         //send data to queue
         struct TimeInfo adjustTIme;
-		uint32_t receivedTime = atoi((char *)msgData->message->payload);
-		//char *end;
-		//uint32_t receivedTime = strtoul((char *)msgData->message->payload, &end, 10);
-		//if (*end != '\0') {
-			//// ��������: �ַ����а����������ַ�
-		//}
-        uint32_t convertedTime = receivedTime / 1000;
-		LogMessage(LOG_DEBUG_LVL, "\r\n %d / 1000 = %d", receivedTime, convertedTime);
+		uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+		//LogMessage(LOG_DEBUG_LVL, "\r\n %d / 1000 = %d", receivedTime, convertedTime);
 
         adjustTIme.type = TIME_INFO_ADJUST;
 		adjustTIme.milliseconds = 0;
 		adjustTIme.seconds = 0;
-        adjustTIme.minutes = (convertedTime / 60) % 60;
-        adjustTIme.hours = (convertedTime / 3600) % 24;
-		LogMessage(LOG_DEBUG_LVL, "\r\n %d, %d\r\n", adjustTIme.hours, adjustTIme.minutes);
+        adjustTIme.minutes = (receivedTime / 60) % 60;
+        adjustTIme.hours = (receivedTime / 3600) % 24;
+		//LogMessage(LOG_DEBUG_LVL, "\r\n %d, %d\r\n", adjustTIme.hours, adjustTIme.minutes);
 		xQueueSend(xQueueTimeAdjInfo, &adjustTIme, (TickType_t)10);
     }
+}
+
+void SubscribeHandlerButtonTopic(MessageData *msgData) {
+    if (strncmp((char *)msgData->topicName->lenstring.data, Button_TOPIC, msgData->topicName->lenstring.len) == 0) {
+        struct ButtonDataPacket button;
+        //button.mode = MANUAL;
+        
+        /* You received publish message which you had subscribed. */
+		/* Print Topic and message */
+		LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
+		LogMessage(LOG_DEBUG_LVL, " >> ");
+		LogMessage(LOG_DEBUG_LVL, "%.*s", msgData->message->payloadlen, (char *)msgData->message->payload);
+
+        if (strncmp((char *)msgData->message->payload, "0", msgData->message->payloadlen) == 0)
+        {
+            button.mode = MANUAL;
+        }
+        else if (strncmp((char *)msgData->message->payload, "1", msgData->message->payloadlen) == 0)
+        {
+            button.mode = SMART;
+        }
+        else if (strncmp((char *)msgData->message->payload, "2", msgData->message->payloadlen) == 0)
+        {
+            button.mode = TIMER;
+        }
+        else if (strncmp((char *)msgData->message->payload, "3", msgData->message->payloadlen) == 0) 
+		{
+            // "0" means open curtain
+            button.openButton = 1;
+            button.closeButton = 0;
+			button.mode = DUMMY;
+            
+        }
+		else if (strncmp((char *)msgData->message->payload, "4", msgData->message->payloadlen) == 0) 
+		{
+            // "1" means close curtain
+            button.openButton = 0;
+            button.closeButton = 1;
+			button.mode = DUMMY;
+        }
+        xQueueSend(xQueueButton, &button, (TickType_t)10);
+    }
+}
+
+void SubscribeHandlerOpenTopic(MessageData *msgData) {
+	// Handle TIMEData message
+	if (strncmp((char *)msgData->topicName->lenstring.data, TIME_TO_OPEN, msgData->topicName->lenstring.len) == 0) {
+		    
+		/* You received publish message which you had subscribed. */
+		/* Print Topic and message */
+		LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
+		LogMessage(LOG_DEBUG_LVL, " >> ");
+		LogMessage(LOG_DEBUG_LVL, "%.*s", msgData->message->payloadlen, (char *)msgData->message->payload);
+		    
+		    
+		//send data to queue
+		struct TimeInfo OpenTime;
+		uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+
+		OpenTime.type = TIME_INFO_SET_OPEN;
+		OpenTime.milliseconds = 0;
+		OpenTime.seconds = 0;
+		OpenTime.minutes = (receivedTime / 60) % 60;
+		OpenTime.hours = (receivedTime / 3600) % 24;
+		xQueueSend(xQueueSetTime, &OpenTime, (TickType_t)10);
+	}
+}
+
+void SubscribeHandlerCloseTopic(MessageData *msgData) {
+	// Handle TIMEData message
+	if (strncmp((char *)msgData->topicName->lenstring.data, TIME_TO_CLOSE, msgData->topicName->lenstring.len) == 0) {
+			
+		/* You received publish message which you had subscribed. */
+		/* Print Topic and message */
+		LogMessage(LOG_DEBUG_LVL, "\r\n %.*s", msgData->topicName->lenstring.len, msgData->topicName->lenstring.data);
+		LogMessage(LOG_DEBUG_LVL, " >> ");
+		LogMessage(LOG_DEBUG_LVL, "%.*s", msgData->message->payloadlen, (char *)msgData->message->payload);
+			
+			
+		//send data to queue
+		struct TimeInfo CloseTime;
+		uint32_t receivedTime = atoi((char *)msgData->message->payload) / 1000;
+
+		CloseTime.type = TIME_INFO_SET_CLOSE;
+		CloseTime.milliseconds = 0;
+		CloseTime.seconds = 0;
+		CloseTime.minutes = (receivedTime / 60) % 60;
+		CloseTime.hours = (receivedTime / 3600) % 24;
+		xQueueSend(xQueueSetTime, &CloseTime, (TickType_t)10);
+	}
 }
 
 /**
@@ -793,6 +880,10 @@ static void mqtt_callback(struct mqtt_module *module_inst, int type, union mqtt_
                 //mqtt_subscribe(module_inst, IMU_TOPIC, 2, SubscribeHandlerImuTopic);
                 //mqtt_subscribe(module_inst, LED_TOPIC, 2, SubscribeHandler);
                 mqtt_subscribe(module_inst, TIME_ADJUST_TOPIC, 2, SubscribeHandlerClockTopic);
+                mqtt_subscribe(module_inst, Button_TOPIC, 2, SubscribeHandlerButtonTopic);
+				mqtt_subscribe(module_inst, TIME_TO_OPEN, 2, SubscribeHandlerOpenTopic);
+				mqtt_subscribe(module_inst, TIME_TO_CLOSE, 2, SubscribeHandlerCloseTopic);
+                
                 /* Enable USART receiving callback. */
 
                 LogMessage(LOG_DEBUG_LVL, "MQTT Connected\r\n");
@@ -1077,6 +1168,8 @@ void vWifiTask(void *pvParameters)
     xQueueTimeInfo = xQueueCreate(5, sizeof(struct TimeInfo));
 	xQueueTimeAdjInfo = xQueueCreate(5, sizeof(struct TimeInfo));
     xQueueSensorBuffer = xQueueCreate(5, sizeof(struct SensorDataPacket));
+    xQueueButton = xQueueCreate(5, sizeof(struct ButtonDataPacket));
+	xQueueSetTime = xQueueCreate(5, sizeof(struct TimeInfo));
 
     if (xQueueWifiState == NULL || xQueueImuBuffer == NULL || xQueueGameBuffer == NULL || xQueueDistanceBuffer == NULL) {
         SerialConsoleWriteString("ERROR Initializing Wifi Data queues!\r\n");
